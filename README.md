@@ -1,6 +1,10 @@
-a simple example
+## install
+```bash
+pip install py-flow
+```
+## example
 
-```python=
+```python
 from flow.module import Module, IdentityLayer
 from flow.optim import SGD
 from flow import function as F
