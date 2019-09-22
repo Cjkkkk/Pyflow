@@ -1,4 +1,5 @@
 import numpy as np
+from .tensor import Tensor
 
 class Operation:
     def __init__(self):
@@ -35,6 +36,42 @@ class MulOperation(Operation):
         self.a.grad = self.output.grad * self.b.data
         self.a.backward()
         self.b.backward()
+
+class SubOperation(Operation):
+    def __init__(self, output, a, b):
+        super().__init__()
+        self.a = a
+        self.b = b
+        self.output = output
+    
+    def f(self):
+        self.b.grad = self.output.grad * (-1)
+        self.a.grad = self.output.grad * 1
+        self.a.backward()
+        self.b.backward()
+
+class truedivOperation(Operation):
+    def __init__(self, output, a, b):
+        super().__init__()
+        self.a = a
+        self.b = b
+        self.output = output
+    
+    def f(self):
+        self.b.grad = self.output.grad * (-self.a.data) / (self.b.data ** 2)
+        self.a.grad = self.output.grad / self.b.data
+        self.a.backward()
+        self.b.backward()
+
+class PowOperation(Operation):
+    def __init__(self, output, a, b):
+        super().__init__()
+        self.a = a
+        self.b = b
+        self.output = output
+    
+    def f(self):
+        pass
 
 class MMOperation(Operation):
     def __init__(self, output, a, b):
