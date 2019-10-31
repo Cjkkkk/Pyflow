@@ -2,13 +2,15 @@ import numpy as np
 
 
 class Tensor:
-    def __init__(self, data, require_grad=False, is_leaf=True):
+    def __init__(self, data, require_grad=False):
         if not isinstance(data, np.ndarray):
             data = np.array(data, dtype=float)
         self.data = data
         self.grad = None
         self.grad_fn = None
-        self.is_leaf = is_leaf
+        # if required_grad is False, is_leaf is True
+        # if required_grad is True and Tensor is created by user, is_leaf is True, False otherwise
+        self.is_leaf = True
         self.require_grad = require_grad
     
     def __add__(self, other):
