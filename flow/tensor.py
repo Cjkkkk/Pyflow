@@ -36,7 +36,7 @@ class Tensor:
         return new_tensor
 
     def __mod__(self, other):
-        new_tensor = Tensor(a.data % b.data)
+        new_tensor = Tensor(self.data % self.data)
         return new_tensor
 
     def __lt__(self, other):

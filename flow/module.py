@@ -19,9 +19,6 @@ class Module:
     def __call__(self, *input, **kwargs):
         return self.forward(*input, **kwargs)
 
-    def __str__(self):
-        return "Module " + str(self.data)
-
     def forward(self, *input):
         raise NotImplementedError("should implement forward method.")
 

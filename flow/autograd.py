@@ -50,7 +50,7 @@ class SubOperation(Operation):
         self.a.backward()
         self.b.backward()
 
-class truedivOperation(Operation):
+class TruedivOperation(Operation):
     def __init__(self, output, a, b):
         super().__init__()
         self.a = a

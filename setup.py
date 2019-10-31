@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='py-flow',
-      version='0.0.1',
+      version='0.0.2',
       description='Simple pytorch implementation',
       url='https://github.com/Cjkkkk/Pyflow',
       author='cjkkkk',
