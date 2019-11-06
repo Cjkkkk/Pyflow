@@ -17,26 +17,29 @@ class Tensor:
         from . import function as F
         return F.add(self, other)
 
-    def __sub__(self, other):
-        from . import function as F
-        return F.sub(self, other)
-
     def __mul__(self, other):
         from . import function as F
         return F.mul(self, other)
     
+    __radd__ = __add__
+    __rmul__ = __mul__
+    
+    def __sub__(self, other):
+        from . import function as F
+        return F.sub(self, other)
+   
     def __truediv__(self, other):
         from . import function as F
         return F.truediv(self, other)
-
-    def __pow__(self, other):
-        from . import function as F
-        return F.pow(self, other)
     
     def __floordiv__(self, other):
         new_tensor = Tensor(self.data // other.data)
         return new_tensor
-
+    
+    def __pow__(self, other):
+        from . import function as F
+        return F.pow(self, other)
+    
     def __mod__(self, other):
         new_tensor = Tensor(self.data % self.data)
         return new_tensor
