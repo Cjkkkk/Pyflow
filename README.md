@@ -36,3 +36,6 @@ output.backward()
 optim.step()
 print(output.data, output.grad, net.a.data.grad, net.a.data.data)
 ```
+
+## todo
+* gradient accum in backward when input is consumed by multi operators
