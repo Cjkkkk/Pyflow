@@ -3,10 +3,10 @@ from .tensor import Tensor
 import numpy as np
 
 
-def register_backward_hook(output, function, *input):
-    output.grad_fn = function(output, *input)
+def register_backward_hook(output, function, *inputs):
+    output.grad_fn = function(*inputs)
     output.is_leaf = False
-    for i in input: # if all input does not require grad, output does not require grad
+    for i in inputs: # if all input does not require grad, output does not require grad
         output.require_grad = i.require_grad or output.require_grad
 
 def add(a, b):
