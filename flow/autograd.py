@@ -3,7 +3,7 @@ from .tensor import Tensor
 
 class Function:
     def __init__(self, *args):
-        self.inputs = args[1:]
+        self.inputs = args
     
     def __call__(self):
         return self.backward()
@@ -12,8 +12,8 @@ class Function:
         raise NotImplementedError("should implement backward method")
 
 class AddFunction(Function):
-    def __init__(self, output, a, b):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
     
     def backward(self, grad_output):
         b_grad = grad_output * 1
@@ -21,8 +21,8 @@ class AddFunction(Function):
         return a_grad, b_grad
 
 class MulFunction(Function):
-    def __init__(self, output, a, b):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
     
     def backward(self, grad_output):
         b_grad = grad_output * self.a.data
@@ -30,8 +30,8 @@ class MulFunction(Function):
         return a_grad, b_grad
 
 class SubFunction(Function):
-    def __init__(self, output, a, b):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
     
     def backward(self, grad_output):
         b_grad = grad_output * (-1)
@@ -39,8 +39,8 @@ class SubFunction(Function):
         return a_grad, b_grad
 
 class TruedivFunction(Function):
-    def __init__(self, output, a, b):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
     
     def backward(self, grad_output):
         b_grad = grad_output * (-self.a.data) / (self.b.data ** 2)
@@ -48,8 +48,8 @@ class TruedivFunction(Function):
         return a_grad, b_grad
 
 class MMFunction(Function):
-    def __init__(self, output, a, b):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
     
     def backward(self, grad_output):
         b_grad = np.matmul(np.transpose(self.a.data), grad_output)
@@ -57,16 +57,16 @@ class MMFunction(Function):
         return a_grad, b_grad
 
 class SumFunction(Function):
-    def __init__(self, output, a):
-        super().__init__()
+    def __init__(self, a):
+        super().__init__(*args)
     
     def backward(self, grad_output):
         a_grad = np.ones(self.a.data.shape)
         return a_grad
 
 class SquareLossFunction(Function):
-    def __init__(self, output, a, b):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
     
     def backward(self, grad_output):
         a_grad = 2.0 * self.a.data
