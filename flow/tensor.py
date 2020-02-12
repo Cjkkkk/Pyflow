@@ -73,4 +73,7 @@ class Tensor:
             if self.grad is None:
                 self.grad = np.ones(self.data.shape)
             if not self.is_leaf:
-                self.grad_fn()
+                input_grads = self.grad_fn(self.grad)
+                for idx, input in enumerate(self.grad_fn.inputs):
+                    input.grad = input_grads[idx]
+                    input.backward()
