@@ -25,8 +25,9 @@ class MulFunction(Function):
         super().__init__(*args)
     
     def backward(self, grad_output):
-        b_grad = grad_output * self.a.data
-        a_grad = grad_output * self.b.data
+        a, b = self.inputs
+        b_grad = grad_output * a.data
+        a_grad = grad_output * b.data
         return a_grad, b_grad
 
 class SubFunction(Function):
@@ -43,8 +44,9 @@ class TruedivFunction(Function):
         super().__init__(*args)
     
     def backward(self, grad_output):
-        b_grad = grad_output * (-self.a.data) / (self.b.data ** 2)
-        a_grad = grad_output / self.b.data
+        a, b = self.inputs
+        b_grad = grad_output * (-a.data) / (b.data ** 2)
+        a_grad = grad_output / b.data
         return a_grad, b_grad
 
 class MMFunction(Function):
@@ -52,8 +54,9 @@ class MMFunction(Function):
         super().__init__(*args)
     
     def backward(self, grad_output):
-        b_grad = np.matmul(np.transpose(self.a.data), grad_output)
-        a_grad = np.matmul(grad_output, np.transpose(self.b.data))
+        a, b = self.inputs
+        b_grad = np.matmul(np.transpose(a.data), grad_output)
+        a_grad = np.matmul(grad_output, np.transpose(b.data))
         return a_grad, b_grad
 
 class SumFunction(Function):
@@ -61,7 +64,8 @@ class SumFunction(Function):
         super().__init__(*args)
     
     def backward(self, grad_output):
-        a_grad = np.ones(self.a.data.shape)
+        a = self.inputs[0]
+        a_grad = np.ones(a.data.shape)
         return a_grad
 
 class SquareLossFunction(Function):
@@ -69,6 +73,7 @@ class SquareLossFunction(Function):
         super().__init__(*args)
     
     def backward(self, grad_output):
-        a_grad = 2.0 * self.a.data
-        b_grad = -2.0 * self.b.data
+        a, b = self.inputs
+        a_grad = 2.0 * a.data
+        b_grad = -2.0 * b.data
         return a_grad, b_grad
