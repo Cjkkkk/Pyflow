@@ -68,12 +68,13 @@ class Tensor:
         new_tensor = Tensor(self.data != other.data)
         return new_tensor
 
-    def backward(self):
+    def backward(self, grad=None):
         if self.require_grad:
-            if self.grad is None:
+            if grad is None:
                 self.grad = np.ones(self.data.shape)
+            else:
+                self.grad = grad
             if not self.is_leaf:
                 input_grads = self.grad_fn(self.grad)
                 for idx, input in enumerate(self.grad_fn.inputs):
-                    input.grad = input_grads[idx]
-                    input.backward()
+                    input.backward(input_grads[idx])
