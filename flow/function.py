@@ -3,48 +3,83 @@ from .tensor import Tensor
 import numpy as np
 
 
-def register_backward_hook(output, function, *inputs):
-    output.grad_fn = function(*inputs)
-    output.is_leaf = False
-    for i in inputs: # if all input does not require grad, output does not require grad
-        output.require_grad = i.require_grad or output.require_grad
+class AddFunction(autograd.Function):        
+    def forward(self, *args):
+        a, b = args
+        new_tensor = Tensor(a.data + b.data)
+        return new_tensor
+    
+    def backward(self, grad_output):
+        b_grad = grad_output * 1
+        a_grad = grad_output * 1
+        return a_grad, b_grad
 
-def add(a, b):
-    new_tensor = Tensor(a.data + b.data)
-    register_backward_hook(new_tensor, autograd.AddFunction, a, b)
-    return new_tensor
+class MulFunction(autograd.Function):
+     def forward(self, *args):
+        a, b = args
+        new_tensor = Tensor(a.data * b.data)
+        return new_tensor
+    
+    def backward(self, grad_output):
+        a, b = self.inputs
+        b_grad = grad_output * a.data
+        a_grad = grad_output * b.data
+        return a_grad, b_grad
 
-def mul(a, b):
-    new_tensor = Tensor(a.data * b.data)
-    register_backward_hook(new_tensor, autograd.MulFunction, a, b)
-    return new_tensor
+class SubFunction(autograd.Function):
+    def forward(self, *args):
+        a, b = args
+        new_tensor = Tensor(a.data - b.data)
+        return new_tensor
+    
+    def backward(self, grad_output):
+        b_grad = grad_output * (-1)
+        a_grad = grad_output * 1
+        return a_grad, b_grad
 
-def sub(a, b):
-    new_tensor = Tensor(a.data - b.data)
-    register_backward_hook(new_tensor, autograd.SubFunction, a, b)
-    return new_tensor
+class TruedivFunction(autograd.Function):
+    def forward(self, *args):
+        a, b = args
+        new_tensor = Tensor(a.data / b.data)
+        return new_tensor
+    
+    def backward(self, grad_output):
+        a, b = self.inputs
+        b_grad = grad_output * (-a.data) / (b.data ** 2)
+        a_grad = grad_output / b.data
+        return a_grad, b_grad
 
-def truediv(a, b):
-    new_tensor = Tensor(a.data / b.data)
-    register_backward_hook(new_tensor, autograd.TruedivFunction, a, b)
-    return new_tensor
+class MMFunction(autograd.Function):
+    def forward(self, *args):
+        a, b = args
+        new_tensor = Tensor(np.matmul(a.data, b.data))
+        return new_tensor
+    
+    def backward(self, grad_output):
+        a, b = self.inputs
+        b_grad = np.matmul(np.transpose(a.data), grad_output)
+        a_grad = np.matmul(grad_output, np.transpose(b.data))
+        return a_grad, b_grad
 
-def pow(a, b):
-    new_tensor = Tensor(a.data ** b.data)
-    register_backward_hook(new_tensor, autograd.PowFunction, a, b)
-    return new_tensor
+class SumFunction(autograd.Function):
+    def forward(self, *args):
+        a = args[0]
+        new_tensor = Tensor(np.sum(a.data))
+        return new_tensor
+    
+    def backward(self, grad_output):
+        a = self.inputs[0]
+        a_grad = np.ones(a.data.shape)
+        return a_grad
 
-def mm(a, b):
-    new_tensor = Tensor(np.matmul(a.data, b.data))
-    register_backward_hook(new_tensor, autograd.MMFunction, a, b)
-    return new_tensor
-
-def sum_(a):
-    new_tensor = Tensor(np.sum(a.data))
-    register_backward_hook(new_tensor, autograd.SumFunction, a)
-    return new_tensor
-
-def square_loss(a, b):
-    new_tensor = Tensor(np.sum(np.square(a.data - b.data)))
-    register_backward_hook(new_tensor, autograd.SquareLossFunction, a, b)
-    return new_tensor
+class SquareLossFunction(autograd.Function):
+    def forward(self, *args):
+        a, b = args
+        new_tensor = Tensor(np.sum(np.square(a.data - b.data)))
+        return new_tensor
+    
+    def backward(self, grad_output):
+        a, b = self.inputs
+        a_grad = 2.0 * a.data
+        b_grad = -2.0 * b.data
+        return a_grad, b_grad
