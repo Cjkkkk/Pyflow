@@ -3,7 +3,7 @@ from .tensor import Tensor
 import numpy as np
 
 
-class AddFunction(autograd.Function):        
+class Add(autograd.Function):        
     def forward(self, *args):
         a, b = args
         new_tensor = Tensor(a.data + b.data)
@@ -14,7 +14,7 @@ class AddFunction(autograd.Function):
         a_grad = grad_output * 1
         return a_grad, b_grad
 
-class MulFunction(autograd.Function):
+class Mul(autograd.Function):
      def forward(self, *args):
         a, b = args
         new_tensor = Tensor(a.data * b.data)
@@ -26,7 +26,7 @@ class MulFunction(autograd.Function):
         a_grad = grad_output * b.data
         return a_grad, b_grad
 
-class SubFunction(autograd.Function):
+class Sub(autograd.Function):
     def forward(self, *args):
         a, b = args
         new_tensor = Tensor(a.data - b.data)
@@ -37,7 +37,7 @@ class SubFunction(autograd.Function):
         a_grad = grad_output * 1
         return a_grad, b_grad
 
-class TruedivFunction(autograd.Function):
+class Truediv(autograd.Function):
     def forward(self, *args):
         a, b = args
         new_tensor = Tensor(a.data / b.data)
@@ -49,7 +49,7 @@ class TruedivFunction(autograd.Function):
         a_grad = grad_output / b.data
         return a_grad, b_grad
 
-class MMFunction(autograd.Function):
+class MM(autograd.Function):
     def forward(self, *args):
         a, b = args
         new_tensor = Tensor(np.matmul(a.data, b.data))
@@ -61,7 +61,7 @@ class MMFunction(autograd.Function):
         a_grad = np.matmul(grad_output, np.transpose(b.data))
         return a_grad, b_grad
 
-class SumFunction(autograd.Function):
+class Sum(autograd.Function):
     def forward(self, *args):
         a = args[0]
         new_tensor = Tensor(np.sum(a.data))
@@ -72,7 +72,7 @@ class SumFunction(autograd.Function):
         a_grad = np.ones(a.data.shape)
         return a_grad
 
-class SquareLossFunction(autograd.Function):
+class SquareLoss(autograd.Function):
     def forward(self, *args):
         a, b = args
         new_tensor = Tensor(np.sum(np.square(a.data - b.data)))
