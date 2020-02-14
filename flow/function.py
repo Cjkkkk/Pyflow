@@ -61,6 +61,18 @@ class MM(autograd.Function):
         b_grad = np.matmul(np.transpose(a.data), grad_output)
         return a_grad, b_grad
 
+class ReLU(autograd.Function):
+    def forward(self, *args):
+        copy = np.copy(args[0].data)
+        copy[copy < 0] = 0
+        return Tensor(copy)
+    
+    def backward(self, grad_output):
+        a = self.inputs[0]
+        a_grad = np.copy(grad_output)
+        a_grad[a.data < 0] = 0
+        return a_grad
+
 class Sum(autograd.Function):
     def forward(self, *args):
         a = args[0]
@@ -91,3 +103,4 @@ true_div = Truediv.apply
 mm = MM.apply
 sum_ = Sum.apply
 square_loss = SquareLoss.apply
+relu = ReLU.apply
