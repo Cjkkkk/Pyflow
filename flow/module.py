@@ -16,10 +16,10 @@ class Module:
             pass
         object.__setattr__(self, name, value)
     
-    def __call__(self, *input, **kwargs):
-        return self.forward(*input, **kwargs)
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
 
-    def forward(self, *input):
+    def forward(self, *inputs):
         raise NotImplementedError("should implement forward method.")
 
     def parameters(self):
@@ -30,6 +30,10 @@ class Module:
             param.extend(self._modules[name].parameters())
         return param
 
+    def to(self, device):
+        for param in self.parameters():
+            param.to(device)
+        
 class IdentityLayer(Module):
     def __init__(self, tensor):
         super().__init__()

@@ -68,6 +68,10 @@ class Tensor:
         new_tensor = Tensor(self.data != other.data)
         return new_tensor
 
+    def to(self, device):
+        # TODO use cupy to enable GPU usage
+        raise NotImplementedError("to method is not supported yet.")
+
     def backward(self, grad=None):
         if self.require_grad:
             if grad is None:
