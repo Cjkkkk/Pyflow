@@ -8,33 +8,34 @@ pip install py-flow
 ## example
 
 ```python
-from flow.module import Module, IdentityLayer
+from flow.module import Module, fullyConnectLayer
 from flow.optim import SGD
 from flow import function as F
 from flow.tensor import Tensor
+import numpy as np
 
-
-class MyNet(Module):
+class TwoFc(Module):
     def __init__(self):
         super().__init__()
-        self.a = IdentityLayer(Tensor([[4.0, 5.0]], require_grad=True))
-        self.b = IdentityLayer(Tensor([[5.0], [6.0]], require_grad=True))
-        self.c = IdentityLayer(Tensor([[1.0,2.0], [3.0,4.0]], require_grad=True))
+        self.fc1 = fullyConnectLayer(2, 10)
+        self.fc2 = fullyConnectLayer(10, 1)
 
-    def forward(self):
-        x = F.mm(self.b(), self.a())
-        y = self.c() + x
-        z = F.sum_(y)
-        return z
+    def forward(self, a):
+        x = self.fc1(a)
+        y = self.fc2(x)
+        return y
 
-net = MyNet()
-optim = SGD(net.parameters(), lr = 0.001)
-
-output = net()
-output.backward()
-
-optim.step()
-print(output.data, output.grad, net.a.data.grad, net.a.data.data)
+# y = 3x_1 + 2x_2
+model = TwoFc()
+optim = SGD(model.parameters(), lr = 0.01)
+for i in range(100):
+    input = Tensor(np.random.randn(1, 2))
+    output = model(input)
+    target = 3 * input.data[0, 0] + 2 * input.data[0, 1]
+    loss = F.SquareLoss()(output, Tensor(np.array([[target]])))
+    loss.backward()
+    optim.step()
+    print("loss", loss.data)
 ```
 
 ## todo
