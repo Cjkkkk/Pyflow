@@ -15,7 +15,7 @@ class Add(autograd.Function):
         return a_grad, b_grad
 
 class Mul(autograd.Function):
-     def forward(self, *args):
+    def forward(self, *args):
         a, b = args
         new_tensor = Tensor(a.data * b.data)
         return new_tensor
@@ -57,8 +57,8 @@ class MM(autograd.Function):
     
     def backward(self, grad_output):
         a, b = self.inputs
-        b_grad = np.matmul(np.transpose(a.data), grad_output)
         a_grad = np.matmul(grad_output, np.transpose(b.data))
+        b_grad = np.matmul(np.transpose(a.data), grad_output)
         return a_grad, b_grad
 
 class Sum(autograd.Function):
@@ -80,6 +80,6 @@ class SquareLoss(autograd.Function):
     
     def backward(self, grad_output):
         a, b = self.inputs
-        a_grad = 2.0 * a.data
-        b_grad = -2.0 * b.data
+        a_grad = 2.0 * (a.data - b.data)
+        b_grad = -2.0 * (a.data - b.data)
         return a_grad, b_grad

@@ -15,22 +15,22 @@ class Tensor:
     
     def __add__(self, other):
         from . import function as F
-        return F.Add(self, other)
+        return F.Add()(self, other)
 
     def __mul__(self, other):
         from . import function as F
-        return F.Mul(self, other)
+        return F.Mul()(self, other)
     
     __radd__ = __add__
     __rmul__ = __mul__
     
     def __sub__(self, other):
         from . import function as F
-        return F.Sub(self, other)
+        return F.Sub()()(self, other)
    
     def __truediv__(self, other):
         from . import function as F
-        return F.Truediv(self, other)
+        return F.TrueDiv()(self, other)
     
     def __floordiv__(self, other):
         new_tensor = Tensor(self.data // other.data)
@@ -75,6 +75,8 @@ class Tensor:
             else:
                 self.grad = grad
             if not self.is_leaf:
-                input_grads = self.grad_fn(self.grad)
+                input_grads = self.grad_fn.backward(self.grad)
+                if not isinstance(input_grads, tuple):
+                    input_grads = (input_grads,)
                 for idx, input in enumerate(self.grad_fn.inputs):
                     input.backward(input_grads[idx])

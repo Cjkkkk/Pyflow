@@ -14,9 +14,9 @@ class MyNet(Module):
         self.c = IdentityLayer(Tensor([[1.0,2.0], [3.0,4.0]], require_grad=True))
 
     def forward(self):
-        x = F.MM(self.b(), self.a())
+        x = F.MM()(self.b(), self.a())
         y = self.c() + x
-        z = F.Sum(y)
+        z = F.Sum()(y)
         return z
 
 net = MyNet()
@@ -26,4 +26,5 @@ output = net()
 output.backward()
 
 optim.step()
+# 109.0 1.0 [[11. 11.]] [[4.011 5.011]]
 print(output.data, output.grad, net.a.data.grad, net.a.data.data)

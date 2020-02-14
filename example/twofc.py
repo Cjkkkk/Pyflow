@@ -14,17 +14,17 @@ class TwoFc(Module):
 
     def forward(self, a):
         x = self.fc1(a)
-        x = self.fc2(x)
-        return x
+        y = self.fc2(x)
+        return y
 
 # y = 3x_1 + 2x_2
 model = TwoFc()
-optim = SGD(model.parameters(), lr = 0.00001)
+optim = SGD(model.parameters(), lr = 0.01)
 for i in range(100):
     input = Tensor(np.random.randn(1, 2))
     output = model(input)
     target = 3 * input.data[0, 0] + 2 * input.data[0, 1]
-    loss = F.SquareLoss(output, Tensor(np.array([target])))
+    loss = F.SquareLoss()(output, Tensor(np.array([[target]])))
     loss.backward()
     optim.step()
     print("loss", loss.data)
