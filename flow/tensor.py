@@ -15,22 +15,22 @@ class Tensor:
     
     def __add__(self, other):
         from . import function as F
-        return F.Add()(self, other)
+        return F.add(self, other)
 
     def __mul__(self, other):
         from . import function as F
-        return F.Mul()(self, other)
+        return F.mul(self, other)
     
     __radd__ = __add__
     __rmul__ = __mul__
     
     def __sub__(self, other):
         from . import function as F
-        return F.Sub()()(self, other)
+        return F.sub(self, other)
    
     def __truediv__(self, other):
         from . import function as F
-        return F.TrueDiv()(self, other)
+        return F.true_div(self, other)
     
     def __floordiv__(self, other):
         new_tensor = Tensor(self.data // other.data)

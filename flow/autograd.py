@@ -2,9 +2,10 @@ import numpy as np
 from .tensor import Tensor
 
 class Function:
-    def __init__(self):
-        pass
-
+    @classmethod
+    def apply(cls, *args):
+        return cls()(*args)
+    
     def __call__(self, *args):
         self.inputs = args
         output = self.forward(*args)

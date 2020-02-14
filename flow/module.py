@@ -46,5 +46,5 @@ class fullyConnectLayer(Module):
         self.weight = Tensor(np.random.randn(input_channel, output_channel), require_grad=True)
 
     def forward(self, x):
-        y = F.MM()(x, self.weight)
+        y = F.mm(x, self.weight)
         return y

@@ -83,3 +83,11 @@ class SquareLoss(autograd.Function):
         a_grad = 2.0 * (a.data - b.data)
         b_grad = -2.0 * (a.data - b.data)
         return a_grad, b_grad
+
+add = Add.apply
+mul = Mul.apply
+sub = Sub.apply
+true_div = Truediv.apply
+mm = MM.apply
+sum_ = Sum.apply
+square_loss = SquareLoss.apply
