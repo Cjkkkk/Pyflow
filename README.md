@@ -1,10 +1,15 @@
 A simple Pytorch reimplementation.
 
-## install
+## install/develop
+### install
 ```bash
 pip install py-flow
 ```
 
+### develop
+```bash
+python setup.py develop
+```
 ## example
 
 ```python
@@ -32,7 +37,7 @@ for i in range(100):
     input = Tensor(np.random.randn(1, 2))
     output = model(input)
     target = 3 * input.data[0, 0] + 2 * input.data[0, 1]
-    loss = F.SquareLoss()(output, Tensor(np.array([[target]])))
+    loss = F.square_loss(output, Tensor(np.array([[target]])))
     loss.backward()
     optim.step()
     print("loss", loss.data)

@@ -1,5 +1,3 @@
-import sys
-sys.path.append("..")
 from flow.module import Module, IdentityLayer
 from flow.optim import SGD
 from flow import function as F
