@@ -45,4 +45,4 @@ for i in range(100):
 ```
 
 ## todo
-* gradient accum in backward when input is consumed by multi operators
+* gradient accum in backward when input is consumed by multi operators [done]
