@@ -3,95 +3,110 @@ from .tensor import Tensor
 import numpy as np
 
 
-class Add(autograd.Function):        
-    def forward(self, *args):
-        a, b = args
+class Add(autograd.Function):  
+    @staticmethod      
+    def forward(ctx, a, b):
         new_tensor = Tensor(a.data + b.data)
         return new_tensor
     
-    def backward(self, grad_output):
+    @staticmethod
+    def backward(ctx, grad_output):
         b_grad = grad_output * 1
         a_grad = grad_output * 1
         return a_grad, b_grad
 
 class Mul(autograd.Function):
-    def forward(self, *args):
-        a, b = args
+    @staticmethod
+    def forward(ctx, a, b):
+        ctx.save_for_backward(a, b)
         new_tensor = Tensor(a.data * b.data)
         return new_tensor
     
-    def backward(self, grad_output):
-        a, b = self.inputs
+    @staticmethod
+    def backward(ctx, grad_output):
+        a, b = ctx.saved_tensors()
         b_grad = grad_output * a.data
         a_grad = grad_output * b.data
         return a_grad, b_grad
 
 class Sub(autograd.Function):
-    def forward(self, *args):
-        a, b = args
+    @staticmethod
+    def forward(ctx, a, b):
         new_tensor = Tensor(a.data - b.data)
         return new_tensor
     
-    def backward(self, grad_output):
+    @staticmethod
+    def backward(ctx, grad_output):
         b_grad = grad_output * (-1)
         a_grad = grad_output * 1
         return a_grad, b_grad
 
 class Truediv(autograd.Function):
-    def forward(self, *args):
-        a, b = args
+    @staticmethod
+    def forward(ctx, a, b):
+        ctx.save_for_backward(a, b)
         new_tensor = Tensor(a.data / b.data)
         return new_tensor
     
-    def backward(self, grad_output):
-        a, b = self.inputs
+    @staticmethod
+    def backward(ctx, grad_output):
+        a, b = ctx.saved_tensors()
         b_grad = grad_output * (-a.data) / (b.data ** 2)
         a_grad = grad_output / b.data
         return a_grad, b_grad
 
 class MM(autograd.Function):
-    def forward(self, *args):
-        a, b = args
+    @staticmethod
+    def forward(ctx, a, b):
+        ctx.save_for_backward(a, b)
         new_tensor = Tensor(np.matmul(a.data, b.data))
         return new_tensor
     
-    def backward(self, grad_output):
-        a, b = self.inputs
+    @staticmethod
+    def backward(ctx, grad_output):
+        a, b = ctx.saved_tensors()
         a_grad = np.matmul(grad_output, np.transpose(b.data))
         b_grad = np.matmul(np.transpose(a.data), grad_output)
         return a_grad, b_grad
 
 class ReLU(autograd.Function):
-    def forward(self, *args):
-        copy = np.copy(args[0].data)
+    @staticmethod
+    def forward(ctx, a):
+        ctx.save_for_backward(a)
+        copy = np.copy(a.data)
         copy[copy < 0] = 0
         return Tensor(copy)
     
-    def backward(self, grad_output):
-        a = self.inputs[0]
+    @staticmethod
+    def backward(ctx, grad_output):
+        a = ctx.saved_tensors()[0]
         a_grad = np.copy(grad_output)
         a_grad[a.data < 0] = 0
         return a_grad
 
 class Sum(autograd.Function):
-    def forward(self, *args):
-        a = args[0]
+    @staticmethod
+    def forward(ctx, a):
+        ctx.save_for_backward(a)
         new_tensor = Tensor(np.sum(a.data))
         return new_tensor
     
-    def backward(self, grad_output):
-        a = self.inputs[0]
+    @staticmethod
+    def backward(ctx, grad_output):
+        a = ctx.saved_tensors()[0]
         a_grad = np.ones(a.data.shape)
         return a_grad
 
 class SquareLoss(autograd.Function):
-    def forward(self, *args):
-        a, b = args
+    @staticmethod
+    def forward(ctx, a, b):
+        ctx.save_for_backward(a, b)
         new_tensor = Tensor(np.sum(np.square(a.data - b.data)))
         return new_tensor
     
-    def backward(self, grad_output):
-        a, b = self.inputs
+    @staticmethod
+    def backward(ctx, grad_output):
+        a, b = ctx.saved_tensors()
         a_grad = 2.0 * (a.data - b.data)
         b_grad = -2.0 * (a.data - b.data)
         return a_grad, b_grad

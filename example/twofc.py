@@ -25,4 +25,5 @@ for i in range(100):
     loss = F.square_loss(output, Tensor(np.array([[target]])))
     loss.backward()
     optim.step()
+    optim.zero_grad()
     print("loss", loss.data)

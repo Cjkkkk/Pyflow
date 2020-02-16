@@ -73,14 +73,5 @@ class Tensor:
         raise NotImplementedError("to method is not supported yet.")
 
     def backward(self, grad=None):
-        if self.require_grad:
-            if grad is None:
-                self.grad = np.ones(self.data.shape)
-            else:
-                self.grad = grad
-            if not self.is_leaf:
-                input_grads = self.grad_fn.backward(self.grad)
-                if not isinstance(input_grads, tuple):
-                    input_grads = (input_grads,)
-                for idx, input in enumerate(self.grad_fn.inputs):
-                    input.backward(input_grads[idx])
+        from . import autograd
+        autograd.backward(self, grad)

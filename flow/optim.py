@@ -3,7 +3,12 @@ from .tensor import Tensor
 class optim:
     def __init__(self):
         pass
-    def step(self, params):
+
+    def zero_grad(self):
+        for param in self.params:
+            param.grad = None
+    
+    def step(self):
         raise NotImplementedError("should implement step method.")
 
 class SGD(optim):
