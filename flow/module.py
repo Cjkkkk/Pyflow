@@ -1,6 +1,8 @@
 from .tensor import Tensor
 from . import function as F
 import numpy as np
+import math
+
 
 class Module:
     def __init__(self):
@@ -52,3 +54,22 @@ class fullyConnectLayer(Module):
     def forward(self, x):
         y = F.mm(x, self.weight)
         return y
+
+class Conv2dLayer(Module):
+    def __init__(self, input_channel, output_channel, kernel_size, stride=1, padding=0, bias=True):
+        super().__init__()
+        self.input_channel = input_channel
+        self.output_channel = output_channel
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        weight_scale = math.sqrt(kernel_size * kernel_size * self.input_channel / 2)
+        if bias:
+            self.bias = Tensor(np.random.standard_normal(self.output_channel) / weight_scale)
+        else:
+            self.bias = None
+        self.weight = Tensor(np.random.standard_normal(
+            (self.output_channel, self.input_channel, kernel_size, kernel_size)) / weight_scale)
+
+    def forward(self, x):
+        return F.conv2d(x, self.weight, self.bias, self.stride, self.padding)

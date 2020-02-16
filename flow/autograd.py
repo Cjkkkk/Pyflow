@@ -16,7 +16,8 @@ class Function:
         output.grad_fn = self
         output.is_leaf = False
         for i in self.inputs: # if all input does not require grad, output does not require grad
-            output.require_grad = i.require_grad or output.require_grad
+            if isinstance(i, Tensor):
+                output.require_grad = i.require_grad or output.require_grad
     
     @classmethod
     def apply(cls, *args):
@@ -47,4 +48,5 @@ def backward(tensor, grad):
             if not isinstance(input_grads, tuple):
                 input_grads = (input_grads,)
             for idx, input in enumerate(tensor.grad_fn.inputs):
-                backward(input, input_grads[idx])
+                if isinstance(input, Tensor):
+                    backward(input, input_grads[idx])
