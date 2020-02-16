@@ -37,8 +37,8 @@ class Function:
 def backward(tensor, grad):
     if tensor.require_grad:
         if grad is None:
-            tensor.grad = np.ones(tensor.data.shape)
-        elif tensor.grad is None:
+            grad = np.ones(tensor.data.shape)
+        if tensor.grad is None:
             tensor.grad = grad
         else:
             tensor.grad += grad
