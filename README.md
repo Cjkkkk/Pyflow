@@ -46,3 +46,8 @@ for i in range(100):
 
 ## todo
 * gradient accum in backward when input is consumed by multi operators [done]
+* mm [done]
+* relu [done]
+* maxpool2d [done]
+* conv2d []
+* mnist example []

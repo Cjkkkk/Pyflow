@@ -166,8 +166,7 @@ def im2col(image, kernel_height, kernel_width, stride):
 class Conv2d(autograd.Function):
     @staticmethod
     def forward(ctx, input, weight, bias, stride, padding):
-        input = input.data
-        weight = weight.data
+        input, weight = input.data, weight.data
         batchsize, input_channel, height, width = input.shape
         output_channel, input_channel, kernel_height, kernel_width = weight.shape
         col_weight = np.transpose(weight.reshape([output_channel, -1]))
@@ -188,7 +187,7 @@ class Conv2d(autograd.Function):
             else:
                 conv_out[i] = np.reshape(np.transpose(np.dot(col_image_i, col_weight)), conv_out[0].shape)
         col_image = np.array(col_image)
-        ctx.save_for_backward(col_image, col_weight, 
+        ctx.save_for_backward(col_image, col_weight, bias,
             input.shape,
             weight.shape,
             stride,
@@ -198,25 +197,34 @@ class Conv2d(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        col_image, col_weight, input_shape, weight_shape, stride, padding = ctx.saved_tensors()
-        # TODO reshape grad_output
+        col_image, col_weight, bias, input_shape, weight_shape, stride, padding = ctx.saved_tensors()
+        batchsize, output_channel, output_height, output_width = grad_output.shape
+        batchsize, input_channel, height, width = input_shape
+        output_channel, input_channel, kernel_height, kernel_width = weight.shape
         
-        col_weight_gradient = np.matmul(np.transpose(col_image), grad_output)
-        col_weight_gradient = np.transpose(col_weight_gradient).reshape(output_channel, input_channel, kernel_height, kernel_width)
+        # init gradient for img2col
+        col_weight_gradient = np.zeros(col_weight.shape)
+        col_image_gradient = np.zeros(col_image.shape)
+        conv_out_gradient = grad_output.shape(grad_output.shape[0], grad_output.shape[1], -1)
         
-        col_image_gradient = np.zeros(input_shape)
-        for i in range(input_shape[0]):
-            col_image_gradient_i = np.matmul(grad_output, np.transpose(col_weight))
-            width_start = 0
-            height_start = 0
-            for j in range(col_image_gradient_i.shape[0]):
-                col_image_gradient[i, :, height_start: height_start + kernel_height, width_start: width_start + kernel_width] += col_image_gradient_i.reshape((input_channel, kernel_height, kernel_width))
-                
-                width_start += 1
-                if width_start == conv_out_shape[3]:
-                    width_start = 0
-                    height_start += 1
-        return col_image_gradient, col_weight_gradient, None, None, None
+        # init gradient for input tensor
+        bias_gradient = np.ones(output_channel) if bias is None else None
+        input_gradient = np.zeros(input_shape)
+    
+        for i in range(batchsize):
+            col_image_gradient = np.matmul(conv_out_gradient[i], np.transpose(col_weight))
+            col_weight_gradient += np.matmul(np.transpose(col_image[i]), conv_out_gradient[i])
+
+            for j in range(input_channel):
+                for h in range(0, height - kernel_height + 1, stride[0]):
+                    for w in range(0, width - kernel_width + 1, stride[1]):
+                        input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient.reshape((input_channel, kernel_height, kernel_width))
+        
+        weight_gradient = col_weight_gradient.reshape(output_channel, input_channel, kernel_height, kernel_width)
+        # remove padding
+        input_gradient = input_gradient[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]]
+        
+        return input_gradient, weight_gradient, bias_gradient, None, None
 
 add = Add.apply
 mul = Mul.apply
