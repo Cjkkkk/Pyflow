@@ -111,11 +111,53 @@ class SquareLoss(autograd.Function):
         b_grad = -2.0 * (a.data - b.data)
         return a_grad, b_grad
 
+class MaxPool2d(autograd.Function):
+    @staticmethod
+    def forward(ctx, tensor, kernel_size, stride, padding):
+        data = tensor.data
+        data = np.pad(data, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
+        batchsize, channel, height, width = data.shape
+        output = np.zeros(
+            (batchsize, 
+            channel, 
+            (height - kernel_size[0] + 2 * padding[0]) // stride[0] + 1,
+            (width - kernel_size[1] + 2 * padding[1]) // stride[1] + 1
+            ))
+        batchsize, channel, output_height, output_width = output.shape
+        for i in range(batchsize):
+            for j in range(channel):
+                for h in range(0, height - kernel_size[0] + 1, stride[0]):
+                    for w in range(0, width - kernel_size[1] + 1, stride[1]):
+                        output[i, j, h // stride[0], w // stride[1]] = np.max(data[
+                            i, 
+                            j, 
+                            h : h + kernel_size[0], 
+                            w : w + kernel_size[1]
+                            ])
+        ctx.save_for_backward(data, kernel_size, stride, padding)
+        return Tensor(output)
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        data, kernel_size, stride, padding = ctx.saved_tensors()
+        batchsize, channel, height, width = data.shape
+        batchsize, channel, output_height, output_width = grad_output.shape
+        
+        grad = np.zeros(data.shape)
+        for i in range(batchsize):
+            for j in range(channel):
+                for h in range(0, height - kernel_size[0] + 1, stride[0]):
+                    for w in range(0, width - kernel_size[1] + 1, stride[1]):
+                        mask = (data[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] == np.max(data[i, j, h : h + kernel_size[0], w : w + kernel_size[1]]))
+                        grad[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] = mask * grad_output[i, j, h // stride[0], w // stride[1]]
+        
+        return grad[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]], None, None, None
+
 def im2col(image, kernel_height, kernel_width, stride):
     # image is a 4d tensor([batchsize, channel, height, width])
     image_col = []
-    for i in range(0, image.shape[2] - kernel_height + 1, stride):
-        for j in range(0, image.shape[3] - kernel_width + 1, stride):
+    for i in range(0, image.shape[2] - kernel_height + 1, stride[0]):
+        for j in range(0, image.shape[3] - kernel_width + 1, stride[1]):
             col = image[:, :, i:i + kernel_height, j:j + kernel_width].reshape([-1])
             image_col.append(col)
     image_col = np.array(image_col)
@@ -124,19 +166,21 @@ def im2col(image, kernel_height, kernel_width, stride):
 class Conv2d(autograd.Function):
     @staticmethod
     def forward(ctx, input, weight, bias, stride, padding):
-        batchsize, input_channel, height, width = input.data.shape
-        output_channel, input_channel, kernel_height, kernel_width = weight.data.shape
-        col_weight = np.transpose(weight.data.reshape([output_channel, -1]))
-        input.data = np.pad(input.data, ((0, 0), (0, 0), (padding, padding), (padding, padding)), 'constant', constant_values=0)
+        input = input.data
+        weight = weight.data
+        batchsize, input_channel, height, width = input.shape
+        output_channel, input_channel, kernel_height, kernel_width = weight.shape
+        col_weight = np.transpose(weight.reshape([output_channel, -1]))
+        input = np.pad(input, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
         conv_out = np.zeros(
             (batchsize, 
             output_channel, 
-            (height - kernel_height ) // stride + 1,
-            (width - kernel_width ) // stride + 1
+            (height - kernel_height + 2 * padding[0]) // stride[0] + 1,
+            (width - kernel_width + 2 * padding[1]) // stride[1] + 1
             ))
         col_image = []
         for i in range(batchsize):
-            img_i = input.data[i][np.newaxis, :]
+            img_i = input[i][np.newaxis, :]
             col_image_i = im2col(img_i, kernel_height, kernel_width, stride)
             col_image.append(col_image_i)
             if bias is not None:
@@ -144,13 +188,35 @@ class Conv2d(autograd.Function):
             else:
                 conv_out[i] = np.reshape(np.transpose(np.dot(col_image_i, col_weight)), conv_out[0].shape)
         col_image = np.array(col_image)
-        ctx.save_for_backward(Tensor(col_image), Tensor(col_weight))
+        ctx.save_for_backward(col_image, col_weight, 
+            input.shape,
+            weight.shape,
+            stride,
+            padding
+            )
         return Tensor(conv_out)
     
     @staticmethod
     def backward(ctx, grad_output):
-        col_image, col_weight = ctx.saved_tensors()
-        return None
+        col_image, col_weight, input_shape, weight_shape, stride, padding = ctx.saved_tensors()
+        # TODO reshape grad_output
+        
+        col_weight_gradient = np.matmul(np.transpose(col_image), grad_output)
+        col_weight_gradient = np.transpose(col_weight_gradient).reshape(output_channel, input_channel, kernel_height, kernel_width)
+        
+        col_image_gradient = np.zeros(input_shape)
+        for i in range(input_shape[0]):
+            col_image_gradient_i = np.matmul(grad_output, np.transpose(col_weight))
+            width_start = 0
+            height_start = 0
+            for j in range(col_image_gradient_i.shape[0]):
+                col_image_gradient[i, :, height_start: height_start + kernel_height, width_start: width_start + kernel_width] += col_image_gradient_i.reshape((input_channel, kernel_height, kernel_width))
+                
+                width_start += 1
+                if width_start == conv_out_shape[3]:
+                    width_start = 0
+                    height_start += 1
+        return col_image_gradient, col_weight_gradient, None, None, None
 
 add = Add.apply
 mul = Mul.apply
@@ -161,3 +227,4 @@ sum_ = Sum.apply
 square_loss = SquareLoss.apply
 relu = ReLU.apply
 conv2d = Conv2d.apply
+maxpool2d = MaxPool2d.apply
