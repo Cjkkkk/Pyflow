@@ -68,6 +68,12 @@ class Tensor:
         new_tensor = Tensor(self.data != other.data)
         return new_tensor
 
+    def shape(self):
+        return self.data.shape
+    
+    def __str__(self):
+        return "tensor(%s)" % self.data
+    
     def to(self, device):
         # TODO use cupy to enable GPU usage
         raise NotImplementedError("to method is not supported yet.")

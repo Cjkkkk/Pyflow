@@ -51,3 +51,7 @@ for i in range(100):
 * maxpool2d [done]
 * conv2d []
 * mnist example []
+* module load/store []
+* log_softmax []
+* view []
+* nll_loss []

@@ -32,6 +32,14 @@ class Module:
             param.extend(self._modules[name].parameters())
         return param
 
+    def state_dict(self):
+        # TODO
+        pass
+    
+    def load_state_dict(self):
+        # TODO
+        pass
+
     def to(self, device):
         for param in self.parameters():
             param.to(device)

@@ -226,6 +226,31 @@ class Conv2d(autograd.Function):
         
         return input_gradient, weight_gradient, bias_gradient, None, None
 
+
+class View(autograd.Function):
+    @staticmethod
+    def forward(ctx, tensor, shape):
+        ctx.save_for_backward(tensor.data.shape)
+        new_tensor = Tensor(tensor.data.reshape(shape))
+        return new_tensor
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        original_shape = ctx.saved_tensors()[0]
+        grad = grad_output.reshape(grad_output)
+        return grad
+
+class LogSoftmax(autograd.Function):
+    @staticmethod
+    def forward(ctx, tensor):
+        ctx.save_for_backward(tensor)
+        return tensor
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        tensor = ctx.saved_tensors()[0]
+        return grad_output
+
 add = Add.apply
 mul = Mul.apply
 sub = Sub.apply
@@ -236,3 +261,5 @@ square_loss = SquareLoss.apply
 relu = ReLU.apply
 conv2d = Conv2d.apply
 maxpool2d = MaxPool2d.apply
+log_softmax = LogSoftmax.apply
+view = View.apply
