@@ -13,7 +13,7 @@ python setup.py develop
 ## example
 
 ```python
-from flow.module import Module, fullyConnectLayer
+from flow.module import Module, Linear
 from flow.optim import SGD
 from flow import function as F
 from flow.tensor import Tensor
@@ -22,8 +22,8 @@ import numpy as np
 class TwoFc(Module):
     def __init__(self):
         super().__init__()
-        self.fc1 = fullyConnectLayer(2, 10)
-        self.fc2 = fullyConnectLayer(10, 1)
+        self.fc1 = Linear(2, 10)
+        self.fc2 = Linear(10, 1)
 
     def forward(self, a):
         x = self.fc1(a)
