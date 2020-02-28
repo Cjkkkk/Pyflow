@@ -44,7 +44,7 @@ class Module:
         for param in self.parameters():
             param.to(device)
         
-class IdentityLayer(Module):
+class Identity(Module):
     def __init__(self, tensor):
         super().__init__()
         self.data = tensor
@@ -52,7 +52,7 @@ class IdentityLayer(Module):
     def forward(self):
         return self.data
 
-class fullyConnectLayer(Module):
+class Linear(Module):
     def __init__(self, input_channel, output_channel):
         super().__init__()
         self.input_channel = input_channel
@@ -71,7 +71,7 @@ def _make_pair(v):
     else:
         raise ValueError("expect type int or tuple.")
 
-class Conv2dLayer(Module):
+class Conv2d(Module):
     def __init__(self, input_channel, output_channel, kernel_size, stride=1, padding=0, bias=True):
         super().__init__()
         self.input_channel = input_channel
@@ -91,7 +91,7 @@ class Conv2dLayer(Module):
     def forward(self, x):
         return F.conv2d(x, self.weight, self.bias, self.stride, self.padding)
 
-class MaxPool2dLayer(Module):
+class MaxPool2d(Module):
     def __init__(self, kernel_size, stride=1, padding=0):
         super().__init__()
         self.kernel_size = _make_pair(kernel_size)
