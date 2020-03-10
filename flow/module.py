@@ -32,9 +32,19 @@ class Module:
             param.extend(self._modules[name].parameters())
         return param
 
+    def named_modules(self):
+        modules_list = [("", self)]
+        for prefix, module in modules_list:
+            for name in module._modules:
+                modules_list.append((prefix + "." + name, module._modules[name]))
+        return modules_list
+
     def state_dict(self):
-        # TODO
-        pass
+        dic = {}
+        for module_name, module in self.named_modules():
+            for para_name in self._parameters:
+                dic[module_name + "." + para_name] = self._parameters[para_name]
+        return dic
     
     def load_state_dict(self):
         # TODO

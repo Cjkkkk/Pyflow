@@ -1,11 +1,6 @@
 A simple Pytorch reimplementation.
 
 ## install/develop
-### install
-```bash
-pip install py-flow
-```
-
 ### develop
 ```bash
 python setup.py develop
@@ -49,9 +44,9 @@ for i in range(100):
 * mm [done]
 * relu [done]
 * maxpool2d [done]
-* conv2d []
+* conv2d [done]
+* log_softmax [done]
+* view [done]
+* nll_loss [done]
 * mnist example []
 * module load/store []
-* log_softmax []
-* view []
-* nll_loss []

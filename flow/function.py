@@ -94,7 +94,7 @@ class Sum(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         a = ctx.saved_tensors()[0]
-        a_grad = np.ones(a.data.shape)
+        a_grad = grad_output * np.ones(a.data.shape)
         return a_grad
 
 class SquareLoss(autograd.Function):
@@ -107,8 +107,8 @@ class SquareLoss(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         a, b = ctx.saved_tensors()
-        a_grad = 2.0 * (a.data - b.data)
-        b_grad = -2.0 * (a.data - b.data)
+        a_grad = grad_output * 2.0 * (a.data - b.data)
+        b_grad = grad_output * -2.0 * (a.data - b.data)
         return a_grad, b_grad
 
 class MaxPool2d(autograd.Function):
@@ -243,13 +243,43 @@ class View(autograd.Function):
 class LogSoftmax(autograd.Function):
     @staticmethod
     def forward(ctx, tensor):
-        ctx.save_for_backward(tensor)
-        return tensor
+        data = tensor.data
+        pro_sum = np.sum(data)
+        pro = data / pro_sum
+        log_pro = np.log(pro)
+        ctx.save_for_backward(pro)
+        return Tensor(log_pro)
     
     @staticmethod
     def backward(ctx, grad_output):
-        tensor = ctx.saved_tensors()[0]
-        return grad_output
+        pro = ctx.saved_tensors()[0]
+        return grad_output * (1 - pro)
+
+class NllLoss(autograd.Function):
+    @staticmethod
+    def forward(ctx, input, target, size_average):
+        # input is size (N, C), target is size (N, 1), output is size (N, 1)
+        input, target = input.data, target.data
+        nll = [- log_pro[target[idx]] for idx, log_pro in enumerate(input)]
+        if size_average:
+            loss = np.average(nll)
+        else:
+            loss = np.sum(nll)
+        ctx.save_for_backward(target, input, size_average)
+        return Tensor(loss)
+    @staticmethod
+    def backward(ctx, grad_output):
+        # grad_output is size (N, 1), output is size (N, C) 
+        target, input, size_average = ctx.saved_tensors()
+        output = np.zeros(input.shape)
+        batch_size = output.shape[0]
+        for idx in range(batch_size):
+            output[idx, target[idx]] = - 1
+        if size_average:
+            output = output * grad_output / batch_size
+        else:
+            output = output * grad_output
+        return output, None, None
 
 add = Add.apply
 mul = Mul.apply
@@ -263,3 +293,4 @@ conv2d = Conv2d.apply
 maxpool2d = MaxPool2d.apply
 log_softmax = LogSoftmax.apply
 view = View.apply
+nll_loss = NllLoss.apply
