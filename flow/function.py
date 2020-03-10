@@ -205,20 +205,21 @@ class Conv2d(autograd.Function):
         # init gradient for img2col
         col_weight_gradient = np.zeros(col_weight.shape)
         col_image_gradient = np.zeros(col_image.shape)
-        conv_out_gradient = grad_output.reshape(grad_output.shape[0], grad_output.shape[1], -1)
+        conv_out_gradient = grad_output.reshape(batchsize, output_channel, -1)
         
         # init gradient for input tensor
         bias_gradient = np.ones(output_channel) if bias is None else None
         input_gradient = np.zeros(input_shape)
     
         for i in range(batchsize):
-            col_image_gradient = np.matmul(conv_out_gradient[i], np.transpose(col_weight))
-            col_weight_gradient += np.matmul(np.transpose(col_image[i]), conv_out_gradient[i])
-
+            print(col_image[i].shape, col_weight_gradient.shape, conv_out_gradient[i].shape)
+            col_image_gradient[i] = np.matmul(np.transpose(conv_out_gradient[i]), np.transpose(col_weight))
+            col_weight_gradient += np.matmul(np.transpose(col_image[i]), np.transpose(conv_out_gradient[i]))
             for j in range(input_channel):
                 for h in range(0, height - kernel_height + 1, stride[0]):
                     for w in range(0, width - kernel_width + 1, stride[1]):
-                        input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient.reshape((input_channel, kernel_height, kernel_width))
+                        # TODO
+                        input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient[i].reshape((input_channel, kernel_height, kernel_width))
         
         weight_gradient = col_weight_gradient.reshape(output_channel, input_channel, kernel_height, kernel_width)
         # remove padding
