@@ -59,6 +59,9 @@ class Module:
         return dic
     
     def load_state_dict(self, state_dict):
+        for module in self.modules():
+            module._parameters = dict() # reset parameters, otherwise old parameters will remain
+        
         for name in state_dict:
             s = name.split(".")
             module_path, para_name = s[1:-1], s[-1]
