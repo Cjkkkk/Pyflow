@@ -200,12 +200,12 @@ class Conv2d(autograd.Function):
         col_image, col_weight, bias, input_shape, weight_shape, stride, padding = ctx.saved_tensors()
         batchsize, output_channel, output_height, output_width = grad_output.shape
         batchsize, input_channel, height, width = input_shape
-        output_channel, input_channel, kernel_height, kernel_width = weight.shape
+        output_channel, input_channel, kernel_height, kernel_width = weight_shape
         
         # init gradient for img2col
         col_weight_gradient = np.zeros(col_weight.shape)
         col_image_gradient = np.zeros(col_image.shape)
-        conv_out_gradient = grad_output.shape(grad_output.shape[0], grad_output.shape[1], -1)
+        conv_out_gradient = grad_output.reshape(grad_output.shape[0], grad_output.shape[1], -1)
         
         # init gradient for input tensor
         bias_gradient = np.ones(output_channel) if bias is None else None

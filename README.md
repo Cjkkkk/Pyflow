@@ -44,7 +44,7 @@ for i in range(100):
 * mm [done]
 * relu [done]
 * maxpool2d [done]
-* conv2d [done]
+* conv2d []
 * log_softmax [done]
 * view [done]
 * nll_loss [done]
