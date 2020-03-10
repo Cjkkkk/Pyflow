@@ -24,13 +24,12 @@ class Module:
     def forward(self, *inputs):
         raise NotImplementedError("should implement forward method.")
 
-    def parameters(self):
-        param = []
-        for name in self._parameters:
-            param.append(self._parameters[name])
-        for name in self._modules:
-            param.extend(self._modules[name].parameters())
-        return param
+    def modules(self):
+        modules_list = [self]
+        for module in modules_list:
+            for name in module._modules:
+                modules_list.append(module._modules[name])
+        return modules_list
 
     def named_modules(self):
         modules_list = [("", self)]
@@ -39,21 +38,48 @@ class Module:
                 modules_list.append((prefix + "." + name, module._modules[name]))
         return modules_list
 
+    def parameters(self):
+        param = []
+        for module in self.modules():
+            param.extend(module._parameters.values())
+        return param
+
+    def named_parameters(self):
+        params_list = []
+        for module_name, module in self.named_modules():
+            for param in module._parameters:
+                params_list.append((module_name + "." + param, module._parameters[param]))
+        return params_list
+    
     def state_dict(self):
         dic = {}
         for module_name, module in self.named_modules():
-            for para_name in self._parameters:
-                dic[module_name + "." + para_name] = self._parameters[para_name]
+            for para_name in module._parameters:
+                dic[module_name + "." + para_name] = module._parameters[para_name]
         return dic
     
-    def load_state_dict(self):
-        # TODO
-        pass
+    def load_state_dict(self, state_dict):
+        for name in state_dict:
+            s = name.split(".")
+            module_path, para_name = s[1:-1], s[-1]
+            module = self
+            for p in module_path:
+                module = getattr(module, p)
+            setattr(module, para_name, state_dict[name])
 
     def to(self, device):
-        for param in self.parameters():
-            param.to(device)
-        
+        raise NotImplemented()
+
+
+def _make_pair(v):
+    if isinstance(v, int):
+        return (v, v)
+    elif isinstance(v, tuple) and len(v) == 2:
+        return v
+    else:
+        raise ValueError("expect type int or tuple.")
+
+
 class Identity(Module):
     def __init__(self, tensor):
         super().__init__()
@@ -72,14 +98,6 @@ class Linear(Module):
     def forward(self, x):
         y = F.mm(x, self.weight)
         return y
-
-def _make_pair(v):
-    if isinstance(v, int):
-        return (v, v)
-    elif isinstance(v, tuple) and len(v) == 2:
-        return v
-    else:
-        raise ValueError("expect type int or tuple.")
 
 class Conv2d(Module):
     def __init__(self, input_channel, output_channel, kernel_size, stride=1, padding=0, bias=True):

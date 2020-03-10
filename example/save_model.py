@@ -1,13 +1,4 @@
-A simple Pytorch reimplementation.
-
-## install/develop
-### develop
-```bash
-python setup.py develop
-```
-## example
-
-```python
+import pickle
 from flow.module import Module, Linear
 from flow.optim import SGD
 from flow import function as F
@@ -36,19 +27,17 @@ for i in range(100):
     loss.backward()
     optim.step()
     optim.zero_grad()
-    print("loss", loss.data)
-```
 
-## todo
-* gradient accum in backward when input is consumed by multi operators [done]
-* mm [done]
-* relu [done]
-* maxpool2d [done]
-* conv2d [done]
-* log_softmax [done]
-* view [done]
-* nll_loss [done]
-* module load/store [done]
-* mnist example []
-* test []
-* gradient_check_tool []
+with open("checkpoint.pth", "wb") as f:
+    pickle.dump(model.state_dict(), f)
+
+with open("checkpoint.pth", "rb") as f:
+    state_dict = pickle.load(f)
+
+model = TwoFc()
+model.load_state_dict(state_dict)
+input = Tensor(np.random.randn(1, 2))
+output = model(input)
+target = 3 * input.data[0, 0] + 2 * input.data[0, 1]
+loss = F.square_loss(output, Tensor(np.array([[target]])))
+print("loss", loss.data)
