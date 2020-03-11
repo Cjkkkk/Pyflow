@@ -215,11 +215,10 @@ class Conv2d(autograd.Function):
             print(col_image[i].shape, col_weight_gradient.shape, conv_out_gradient[i].shape)
             col_image_gradient[i] = np.matmul(np.transpose(conv_out_gradient[i]), np.transpose(col_weight))
             col_weight_gradient += np.matmul(np.transpose(col_image[i]), np.transpose(conv_out_gradient[i]))
-            for j in range(input_channel):
+            for j in range(col_image.shape[1]):
                 for h in range(0, height - kernel_height + 1, stride[0]):
                     for w in range(0, width - kernel_width + 1, stride[1]):
-                        # TODO
-                        input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient[i].reshape((input_channel, kernel_height, kernel_width))
+                        input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient[i, j].reshape((input_channel, kernel_height, kernel_width))
         
         weight_gradient = col_weight_gradient.reshape(output_channel, input_channel, kernel_height, kernel_width)
         # remove padding
