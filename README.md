@@ -38,17 +38,23 @@ for i in range(100):
     optim.zero_grad()
     print("loss", loss.data)
 ```
+## test
+```bash
+python test/test_gradient.py
+```
+
+PS: `pytorch` is required to check the correctness of implementation.
 
 ## todo
 * gradient accum in backward when input is consumed by multi operators [done]
 * mm [done]
 * relu [done]
-* maxpool2d [done]
-* conv2d []
+* maxpool2d []
+* conv2d [done]
 * log_softmax [done]
 * view [done]
 * nll_loss [done]
 * module load/store [done]
 * mnist example []
 * test []
-* gradient_check_tool []
+* gradient_check_tool [done]
