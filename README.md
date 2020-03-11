@@ -51,7 +51,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 * gradient accum in backward when input is consumed by multi operators [done]
 * mm [done]
 * relu [done]
-* maxpool2d []
+* maxpool2d [done]
 * conv2d [done]
 * log_softmax [done]
 * view [done]

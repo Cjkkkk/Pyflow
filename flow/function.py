@@ -150,7 +150,7 @@ class MaxPool2d(autograd.Function):
                 for h in range(0, height - kernel_size[0] + 1, stride[0]):
                     for w in range(0, width - kernel_size[1] + 1, stride[1]):
                         mask = (data[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] == np.max(data[i, j, h : h + kernel_size[0], w : w + kernel_size[1]]))
-                        grad[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] = mask * grad_output[i, j, h // stride[0], w // stride[1]]
+                        grad[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] += mask * grad_output[i, j, h // stride[0], w // stride[1]]
         
         return grad[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]], None, None, None
 
