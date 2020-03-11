@@ -1,5 +1,7 @@
 A simple Pytorch reimplementation.
 
+[![CircleCI](https://circleci.com/gh/Cjkkkk/Pyflow.svg?style=svg)](https://circleci.com/gh/Cjkkkk/Pyflow)
+
 ## install/develop
 ### develop
 ```bash
