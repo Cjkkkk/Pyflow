@@ -139,6 +139,7 @@ class MaxPool2d(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
+        # TODO
         data, kernel_size, stride, padding = ctx.saved_tensors()
         batchsize, channel, height, width = data.shape
         batchsize, channel, output_height, output_width = grad_output.shape
@@ -211,13 +212,14 @@ class Conv2d(autograd.Function):
         input_gradient = np.zeros(input_shape)
     
         for i in range(batchsize):
-            col_image_gradient = np.sum(np.matmul(np.transpose(conv_out_gradient[i]), col_weight), axis=0)
+            col_image_gradient = np.matmul(np.transpose(conv_out_gradient[i]), col_weight)
             col_weight_gradient += np.matmul(conv_out_gradient[i], col_image[i])
             
+            j = 0
             for h in range(0, height - kernel_height + 1, stride[0]):
                 for w in range(0, width - kernel_width + 1, stride[1]):
-                    for j in range(col_image.shape[1]):
-                        input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient.reshape((input_channel, kernel_height, kernel_width))
+                    input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient[j].reshape((input_channel, kernel_height, kernel_width))
+                    j += 1
         
         weight_gradient = col_weight_gradient.reshape(output_channel, input_channel, kernel_height, kernel_width)
         # remove padding
