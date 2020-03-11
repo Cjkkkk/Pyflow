@@ -169,7 +169,7 @@ class Conv2d(autograd.Function):
         input, weight = input.data, weight.data
         batchsize, input_channel, height, width = input.shape
         output_channel, input_channel, kernel_height, kernel_width = weight.shape
-        col_weight = np.transpose(weight.reshape([output_channel, -1]))
+        col_weight = weight.reshape([output_channel, -1])
         input = np.pad(input, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
         conv_out = np.zeros(
             (batchsize, 
@@ -183,9 +183,9 @@ class Conv2d(autograd.Function):
             col_image_i = im2col(img_i, kernel_height, kernel_width, stride)
             col_image.append(col_image_i)
             if bias is not None:
-                conv_out[i] = np.reshape(np.transpose(np.dot(col_image_i, col_weight) + bias.data), conv_out[0].shape)
+                conv_out[i] = np.reshape(np.dot(col_weight, np.transpose(col_image_i)) + bias.data, conv_out[0].shape)
             else:
-                conv_out[i] = np.reshape(np.transpose(np.dot(col_image_i, col_weight)), conv_out[0].shape)
+                conv_out[i] = np.reshape(np.dot(col_weight, np.transpose(col_image_i)), conv_out[0].shape)
         col_image = np.array(col_image)
         ctx.save_for_backward(col_image, col_weight, bias,
             input.shape,
@@ -212,9 +212,8 @@ class Conv2d(autograd.Function):
         input_gradient = np.zeros(input_shape)
     
         for i in range(batchsize):
-            print(col_image[i].shape, col_weight_gradient.shape, conv_out_gradient[i].shape)
-            col_image_gradient[i] = np.matmul(np.transpose(conv_out_gradient[i]), np.transpose(col_weight))
-            col_weight_gradient += np.matmul(np.transpose(col_image[i]), np.transpose(conv_out_gradient[i]))
+            col_image_gradient[i] = np.matmul(np.transpose(conv_out_gradient[i]), col_weight)
+            col_weight_gradient += np.matmul(conv_out_gradient[i], col_image[i])
             for j in range(col_image.shape[1]):
                 for h in range(0, height - kernel_height + 1, stride[0]):
                     for w in range(0, width - kernel_width + 1, stride[1]):
@@ -223,7 +222,6 @@ class Conv2d(autograd.Function):
         weight_gradient = col_weight_gradient.reshape(output_channel, input_channel, kernel_height, kernel_width)
         # remove padding
         input_gradient = input_gradient[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]]
-        
         return input_gradient, weight_gradient, bias_gradient, None, None
 
 

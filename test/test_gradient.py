@@ -12,6 +12,6 @@ gradient_check(F.nll_loss, Tensor([[1, 2, 3, 4], [5, 6, 7, 8]], require_grad=Tru
 # pool2d = MaxPool2d(2, stride=2, padding=1)
 # gradient_check(pool2d, input)
 
-input = Tensor(np.random.randint(5, size=(1, 3, 3, 3)))
+input = Tensor(np.random.randint(5, size=(1, 3, 3, 3)), require_grad=True)
 weight = Tensor(np.random.randint(5, size=(2, 3, 2, 2)), require_grad=True)
 gradient_check(F.conv2d, input, weight, None, (1, 1), (0, 0))
