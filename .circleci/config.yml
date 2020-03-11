@@ -13,7 +13,6 @@ jobs:
       - python/save-cache
       - run:
           command: |
-            sudo pip install torch torchvision
             python test/test_gradient.py
           name: Test
 
