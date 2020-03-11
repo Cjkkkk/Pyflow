@@ -13,8 +13,8 @@ jobs:
       - python/save-cache
       - run:
           command: |
-            sudo python setup.py develop
-            sudo python test/test_gradient.py
+            pip install -e .
+            python test/test_gradient.py
           name: Test
 
 workflows:
