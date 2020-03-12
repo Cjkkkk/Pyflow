@@ -1,7 +1,7 @@
 from flow.module import Module, Linear
 from flow.optim import SGD
 from flow import function as F
-from flow.tensor import Tensor
+from flow.tensor import Tensor, randn
 import numpy as np
 
 class TwoFc(Module):
@@ -19,11 +19,11 @@ class TwoFc(Module):
 model = TwoFc()
 optim = SGD(model.parameters(), lr = 0.01)
 for i in range(100):
-    input = Tensor(np.random.randn(1, 2))
+    input = randn((1, 2))
     output = model(input)
     target = 3 * input[0, 0] + 2 * input[0, 1]
-    loss = F.square_loss(output, Tensor(np.array([[target]])))
+    loss = F.square_loss(output, Tensor([[target]]))
     loss.backward()
     optim.step()
     optim.zero_grad()
-    print("loss", loss.data)
+    print("loss: ", loss)
