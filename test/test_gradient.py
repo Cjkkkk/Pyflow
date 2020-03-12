@@ -1,6 +1,7 @@
 import unittest
 import numpy as np
 import torch
+import torch.nn.functional as PF
 
 import flow.function as F
 from flow.tensor import Tensor
@@ -9,16 +10,31 @@ from flow.module import MaxPool2d, Conv2d
 
 
 
-class TestGradient(unittest.TestCase):
+class TestGradientAuto(unittest.TestCase):
     # check using gradient_check tools
-    def test_sum(self):
+    def test_sum_auto(self):
         gradient_check(F.sum_, Tensor([[1,2,3,4], [5, 6, 7, 8]], require_grad=True))
 
-    def test_nll_loss(self):
+    def test_nll_loss_auto(self):
         gradient_check(F.nll_loss, Tensor([[1, 2, 3, 4], [5, 6, 7, 8]], require_grad=True), Tensor(np.array([0, 1])), True)
 
+    def test_logsoftmax_auto(self):
+        gradient_check(F.log_softmax, Tensor([[1,2,3,4], [5, 6, 7, 8]], require_grad=True))
 
+class TestGradientPytorch(unittest.TestCase):
     # check using pytorch
+    def test_logsoftmax(self):
+        torch_input = torch.rand((3, 2), requires_grad=True)
+        torch_output = PF.log_softmax(torch_input, dim=1)
+        torch_output.backward(torch.ones(torch_output.shape))
+
+        flow_input = Tensor(torch_input.detach().numpy(), require_grad=True)
+        flow_output = F.log_softmax(flow_input)
+        flow_output.backward()
+        
+        assert np.allclose(torch_output.detach().numpy(), flow_output.data)
+        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad)
+
     def test_conv2d(self):
         torch_conv2d = torch.nn.Conv2d(3, 2, 2, bias=False)
         torch_input = torch.rand((1, 3, 3, 3), requires_grad=True)

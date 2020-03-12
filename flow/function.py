@@ -243,17 +243,26 @@ class View(autograd.Function):
 class LogSoftmax(autograd.Function):
     @staticmethod
     def forward(ctx, tensor):
+        # tensor size is (N, C)
         data = tensor.data
-        pro_sum = np.sum(data)
-        pro = data / pro_sum
-        log_pro = np.log(pro)
-        ctx.save_for_backward(pro)
-        return Tensor(log_pro)
+        data_shift = data - np.max(data)
+        data_shift_exp = np.exp(data_shift)
+        exp_sum = np.sum(data_shift_exp, axis=1, keepdims=True)
+        res = data_shift - np.log(exp_sum)
+        ctx.save_for_backward(data_shift_exp, exp_sum)
+        return Tensor(res)
     
     @staticmethod
     def backward(ctx, grad_output):
-        pro = ctx.saved_tensors()[0]
-        return grad_output * (1 - pro)
+        data_shift_exp, exp_sum = ctx.saved_tensors()
+        e = - data_shift_exp / exp_sum
+        N, C = e.shape
+        grad = np.zeros((N, C))
+        for i in range(N):
+            jac = np.tile(e[i], (C, 1))
+            jac[np.diag_indices_from(jac)] += 1
+            grad[i] = np.matmul(np.transpose(jac), grad_output[i])
+        return grad
 
 class NllLoss(autograd.Function):
     @staticmethod
