@@ -237,7 +237,7 @@ class View(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         original_shape = ctx.saved_tensors()[0]
-        grad = grad_output.reshape(grad_output)
+        grad = grad_output.reshape(original_shape)
         return grad
 
 class LogSoftmax(autograd.Function):
