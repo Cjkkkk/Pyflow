@@ -7,24 +7,24 @@ class Context:
     def saved_tensors(self):
         return self.store
 
+def register_backward(func, output):
+        output.grad_fn = func
+        output.is_leaf = False
+        for i in func.inputs: # if all input does not require grad, output does not require grad
+            if isinstance(i, Tensor):
+                output.require_grad = i.require_grad or output.require_grad
+
 class Function:
     def __init__(self):
         self.ctx = Context()
         self.inputs = None
-
-    def register_backward(self, output):
-        output.grad_fn = self
-        output.is_leaf = False
-        for i in self.inputs: # if all input does not require grad, output does not require grad
-            if isinstance(i, Tensor):
-                output.require_grad = i.require_grad or output.require_grad
     
     @classmethod
     def apply(cls, *args):
-        f = cls()
-        f.inputs = args
-        output = cls.forward(f.ctx, *args)
-        f.register_backward(output)
+        func = cls()
+        func.inputs = args
+        output = cls.forward(func.ctx, *args)
+        register_backward(func, output)
         return output
 
     @staticmethod
