@@ -4,7 +4,7 @@ import numpy as np
 class Tensor:
     def __init__(self, data, require_grad=False):
         if not isinstance(data, np.ndarray):
-            data = np.array(data, dtype=float)
+            data = np.array(data)
         self.data = data
         self.grad = None
         self.grad_fn = None
@@ -105,8 +105,8 @@ class Tensor:
     def __setitem__(self, key, value):
         self.data[key] = value
 
-def ones(shape):
-    return Tensor(np.ones(shape))
+def ones(shape, require_grad=False):
+    return Tensor(np.ones(shape), require_grad)
 
-def randn(shape):
-    return Tensor(np.randn(*shape))
+def randn(shape, require_grad=False):
+    return Tensor(np.random.randn(*shape), require_grad)

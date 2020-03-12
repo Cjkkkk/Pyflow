@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as PF
 
 import flow.function as F
-from flow.tensor import Tensor
+from flow.tensor import Tensor, randn
 from flow.utils import gradient_check
 from flow.module import MaxPool2d, Conv2d
 
@@ -13,13 +13,16 @@ from flow.module import MaxPool2d, Conv2d
 class TestGradientAuto(unittest.TestCase):
     # check using gradient_check tools
     def test_sum_auto(self):
-        gradient_check(F.sum_, Tensor([[1,2,3,4], [5, 6, 7, 8]], require_grad=True))
+        gradient_check(F.sum_, randn((5,4), require_grad=True))
 
     def test_nll_loss_auto(self):
-        gradient_check(F.nll_loss, Tensor([[1, 2, 3, 4], [5, 6, 7, 8]], require_grad=True), Tensor(np.array([0, 1])), True)
+        gradient_check(F.nll_loss, randn((2,4), require_grad=True), Tensor([0, 1]), True)
+
+    def test_square_loss_auto(self):
+        gradient_check(F.square_loss, randn((2,4), require_grad=True), randn((2,4), require_grad=True))
 
     def test_logsoftmax_auto(self):
-        gradient_check(F.log_softmax, Tensor([[1,2,3,4], [5, 6, 7, 8]], require_grad=True))
+        gradient_check(F.log_softmax, randn((5,4), require_grad=True))
 
 class TestGradientPytorch(unittest.TestCase):
     # check using pytorch
