@@ -36,9 +36,9 @@ class Tensor:
         new_tensor = Tensor(self.data // other.data)
         return new_tensor
     
-#     def __pow__(self, other):
-#         from . import function as F
-#         return F.pow(self, other)
+    def __pow__(self, other):
+        new_tensor = Tensor(self.data ** self.data)
+        return new_tensor
     
     def __mod__(self, other):
         new_tensor = Tensor(self.data % self.data)
@@ -67,17 +67,46 @@ class Tensor:
     def __ne__(self, other):
         new_tensor = Tensor(self.data != other.data)
         return new_tensor
-
-    def shape(self):
-        return self.data.shape
     
     def __str__(self):
         return "tensor(%s)" % self.data
     
+    def reshape(self, new_shape):
+        self.data = self.data.reshape(new_shape)
+        return self
+    
+    def copy(self):
+        new_tensor = Tensor(np.copy(self.data), self.require_grad)
+        return new_tensor
+    
+    @property
+    def shape(self):
+        return self.data.shape
+    
+    @property
+    def dtype(self):
+        return self.data.dtype
+    
+    def astype(self, type):
+        self.data.astype(type)
+        return self
+    
     def to(self, device):
         # TODO use cupy to enable GPU usage
         raise NotImplementedError("to method is not supported yet.")
-
+    
     def backward(self, grad=None):
         from . import autograd
         autograd.backward(self, grad)
+    
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
+def ones(shape):
+    return Tensor(np.ones(shape))
+
+def randn(shape):
+    return Tensor(np.randn(*shape))
