@@ -231,13 +231,13 @@ class View(autograd.Function):
     @staticmethod
     def forward(ctx, tensor, shape):
         ctx.save_for_backward(tensor.data.shape)
-        new_tensor = Tensor(tensor.data.reshape(shape))
+        new_tensor = Tensor(np.copy(tensor.data).reshape(shape))
         return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):
         original_shape = ctx.saved_tensors()[0]
-        grad = grad_output.reshape(original_shape)
+        grad = np.copy(grad_output).reshape(original_shape)
         return grad
 
 class LogSoftmax(autograd.Function):
@@ -294,6 +294,7 @@ add = Add.apply
 mul = Mul.apply
 sub = Sub.apply
 true_div = Truediv.apply
+
 mm = MM.apply
 sum_ = Sum.apply
 square_loss = SquareLoss.apply

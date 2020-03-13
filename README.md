@@ -47,7 +47,6 @@ python test/test_gradient.py
 PS: `pytorch` is required to check the correctness of implementation.
 
 ## todo
-* gradient accum in backward when input is consumed by multi operators [done]
 * mm [done]
 * relu [done]
 * maxpool2d [done]
@@ -55,7 +54,9 @@ PS: `pytorch` is required to check the correctness of implementation.
 * log_softmax [done]
 * view [done]
 * nll_loss [done]
+
+* gradient accum in backward [done]
 * module load/store [done]
-* mnist example []
-* test []
+* test [done]
 * gradient_check_tool [done]
+* mnist example []

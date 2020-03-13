@@ -20,10 +20,10 @@ class Function:
         self.inputs = None
     
     @classmethod
-    def apply(cls, *args):
+    def apply(cls, *args, **kwargs):
         func = cls()
         func.inputs = args
-        output = cls.forward(func.ctx, *args)
+        output = cls.forward(func.ctx, *args, **kwargs)
         register_backward(func, output)
         return output
 

@@ -23,6 +23,15 @@ class TestGradientAuto(unittest.TestCase):
 
     def test_logsoftmax_auto(self):
         gradient_check(F.log_softmax, randn((5,4), require_grad=True))
+    
+    def test_relu_auto(self):
+        gradient_check(F.relu, randn((5,4), require_grad=True))
+
+    def test_mm_auto(self):
+        gradient_check(F.mm, randn((5,4), require_grad=True), randn((4,5), require_grad=True))
+    
+    def test_view_auto(self):
+        gradient_check(F.view, randn((4,5), require_grad=True), (20, 1))
 
 class TestGradientPytorch(unittest.TestCase):
     # check using pytorch
@@ -35,8 +44,8 @@ class TestGradientPytorch(unittest.TestCase):
         flow_output = F.log_softmax(flow_input)
         flow_output.backward()
         
-        assert np.allclose(torch_output.detach().numpy(), flow_output.data)
-        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad)
+        assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
+        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad, atol=1e-6)
 
     def test_conv2d(self):
         torch_conv2d = torch.nn.Conv2d(3, 2, 2, bias=False)
@@ -50,9 +59,9 @@ class TestGradientPytorch(unittest.TestCase):
         flow_output = flow_conv2d(flow_input)
         flow_output.backward()
 
-        assert np.allclose(torch_output.detach().numpy(), flow_output.data)
-        assert np.allclose(torch_conv2d.weight.grad.detach().numpy(), flow_conv2d.weight.grad)
-        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad)
+        assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
+        assert np.allclose(torch_conv2d.weight.grad.detach().numpy(), flow_conv2d.weight.grad, atol=1e-6)
+        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad, atol=1e-6)
 
     def test_maxpool2d(self):
         torch_maxpool2d = torch.nn.MaxPool2d(2, stride=1)
@@ -65,8 +74,8 @@ class TestGradientPytorch(unittest.TestCase):
         flow_output = flow_maxpool2d(flow_input)
         flow_output.backward()
 
-        assert np.allclose(torch_output.detach().numpy(), flow_output.data)
-        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad)
+        assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
+        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad, atol=1e-6)
 
 if __name__ == '__main__':
     unittest.main()
