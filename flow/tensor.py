@@ -15,10 +15,14 @@ class Tensor:
     
     def __add__(self, other):
         from . import function as F
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         return F.add(self, other)
 
     def __mul__(self, other):
         from . import function as F
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         return F.mul(self, other)
     
     __radd__ = __add__
@@ -26,45 +30,67 @@ class Tensor:
     
     def __sub__(self, other):
         from . import function as F
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         return F.sub(self, other)
    
     def __truediv__(self, other):
         from . import function as F
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         return F.true_div(self, other)
     
     def __floordiv__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         new_tensor = Tensor(self.data // other.data)
         return new_tensor
     
     def __pow__(self, other):
-        new_tensor = Tensor(self.data ** self.data)
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
+        new_tensor = Tensor(self.data ** other.data)
         return new_tensor
     
     def __mod__(self, other):
-        new_tensor = Tensor(self.data % self.data)
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
+        new_tensor = Tensor(self.data % other.data)
         return new_tensor
 
     def __lt__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         new_tensor = Tensor(self.data < other.data)
         return new_tensor
     
     def __gt__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         new_tensor = Tensor(self.data > other.data)
         return new_tensor
 
     def __le__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         new_tensor = Tensor(self.data <= other.data)
         return new_tensor
 
     def __ge__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         new_tensor = Tensor(self.data >= other.data)
         return new_tensor
 
     def __eq__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         new_tensor = Tensor(self.data == other.data)
         return new_tensor
 
     def __ne__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
         new_tensor = Tensor(self.data != other.data)
         return new_tensor
     
@@ -100,7 +126,7 @@ class Tensor:
         autograd.backward(self, grad)
     
     def __getitem__(self, key):
-        return self.data[key]
+        return Tensor(self.data[key], self.require_grad)
 
     def __setitem__(self, key, value):
         self.data[key] = value
