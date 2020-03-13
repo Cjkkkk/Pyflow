@@ -1,6 +1,16 @@
 import numpy as np
 from .tensor import Tensor
 
+_is_grad_enabled = True
+
+class no_grad:
+    def __enter__(self):
+        self.prev = _is_grad_enabled
+        _is_grad_enabled = False
+
+    def __exit__(self):
+        _is_grad_enabled = self.prev
+
 class Context:
     def save_for_backward(self, *tensors):
         self.store = tensors
@@ -8,11 +18,12 @@ class Context:
         return self.store
 
 def register_backward(func, output):
-        output.grad_fn = func
-        output.is_leaf = False
-        for i in func.inputs: # if all input does not require grad, output does not require grad
-            if isinstance(i, Tensor):
-                output.require_grad = i.require_grad or output.require_grad
+    # TODO use _is_grad_enabled
+    output.grad_fn = func
+    output.is_leaf = False
+    for i in func.inputs: # if all input does not require grad, output does not require grad
+        if isinstance(i, Tensor):
+            output.require_grad = i.require_grad or output.require_grad
 
 class Function:
     def __init__(self):

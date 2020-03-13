@@ -8,7 +8,15 @@ class Module:
     def __init__(self):
         self._modules = dict()
         self._parameters = dict()
+        self._training = True
 
+    def train(self, mode=True):
+        for module in self.modules():
+            module._training = mode
+    
+    def eval(self):
+        self.train(False)
+    
     def __setattr__(self, name, value):
         if isinstance(value, Tensor):
             self._parameters[name] = value

@@ -126,10 +126,18 @@ class Tensor:
         autograd.backward(self, grad)
     
     def __getitem__(self, key):
-        return Tensor(self.data[key], self.require_grad)
+        if isinstance(key, Tensor):
+            # assum key is mask
+            return Tensor(self.data[key.data])
+        else:
+            return Tensor(self.data[key])
 
     def __setitem__(self, key, value):
-        self.data[key] = value
+        if isinstance(key, Tensor):
+            # assum key is mask
+            self.data[key.data] = value
+        else:
+            self.data[key] = value
 
 def ones(shape, require_grad=False):
     return Tensor(np.ones(shape), require_grad)
