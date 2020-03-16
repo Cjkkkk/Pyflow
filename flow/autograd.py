@@ -14,6 +14,11 @@ class no_grad:
 class Context:
     def save_for_backward(self, *tensors):
         self.store = tensors
+        # update ref_count for memory optimization
+        for s in self.store:
+            if isinstance(s, Tensor):
+                s.ref_count += 1
+    
     def saved_tensors(self):
         return self.store
 
@@ -26,14 +31,17 @@ def register_backward(func, output):
             output.require_grad = i.require_grad or output.require_grad
 
 class Function:
-    def __init__(self):
+    def __init__(self, *inputs):
         self.ctx = Context()
-        self.inputs = None
+        self.inputs = inputs
+        # update ref_count for memory optimization
+        for inp in self.inputs:
+            if isinstance(inp, Tensor):
+                inp.ref_count += 1
     
     @classmethod
     def apply(cls, *args, **kwargs):
-        func = cls()
-        func.inputs = args
+        func = cls(*args)
         output = cls.forward(func.ctx, *args, **kwargs)
         register_backward(func, output)
         return output

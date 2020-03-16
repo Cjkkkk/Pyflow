@@ -47,6 +47,7 @@ python test/test_gradient.py
 PS: `pytorch` is required to check the correctness of implementation.
 
 ## todo
+### Operator
 * mm [done]
 * relu [done]
 * maxpool2d [done]
@@ -55,10 +56,25 @@ PS: `pytorch` is required to check the correctness of implementation.
 * view [done]
 * nll_loss [done]
 
+### Autograd
 * gradient accum in backward [done]
-* module load/store [done]
-* test [done]
 * gradient_check_tool [done]
-* mnist example []
-* dataloader []
 * no_grad []
+
+### Module
+* module load/store [done]
+
+### Test
+* test []
+
+### Example
+* mnist example []
+
+### Memory Optimization
+* ref count []
+* in-place []
+* normal sharing []
+
+### Other
+* dataloader []
+* hide numpy from user []

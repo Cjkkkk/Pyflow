@@ -12,6 +12,7 @@ class Tensor:
         # if required_grad is True and Tensor is created by user, is_leaf is True, False otherwise
         self.is_leaf = True
         self.require_grad = require_grad
+        self.ref_count = 0
     
     def __add__(self, other):
         from . import function as F
@@ -104,7 +105,7 @@ class Tensor:
     def copy(self):
         new_tensor = Tensor(np.copy(self.data), self.require_grad)
         return new_tensor
-    
+
     @property
     def shape(self):
         return self.data.shape

@@ -73,9 +73,9 @@ class ReLU(autograd.Function):
     @staticmethod
     def forward(ctx, a):
         ctx.save_for_backward(a)
-        copy = np.copy(a.data)
+        copy = a.copy()
         copy[copy < 0] = 0
-        return Tensor(copy)
+        return copy
     
     @staticmethod
     def backward(ctx, grad_output):
@@ -134,13 +134,14 @@ class MaxPool2d(autograd.Function):
                             h : h + kernel_size[0], 
                             w : w + kernel_size[1]
                             ])
-        ctx.save_for_backward(data, kernel_size, stride, padding)
+        ctx.save_for_backward(tensor, kernel_size, stride, padding)
         return Tensor(output)
     
     @staticmethod
     def backward(ctx, grad_output):
         # TODO
-        data, kernel_size, stride, padding = ctx.saved_tensors()
+        tensor, kernel_size, stride, padding = ctx.saved_tensors()
+        data = tensor.data
         batchsize, channel, height, width = data.shape
         batchsize, channel, output_height, output_width = grad_output.shape
         
@@ -231,7 +232,7 @@ class View(autograd.Function):
     @staticmethod
     def forward(ctx, tensor, shape):
         ctx.save_for_backward(tensor.data.shape)
-        new_tensor = Tensor(np.copy(tensor.data).reshape(shape))
+        new_tensor = tensor.copy().reshape(shape)
         return new_tensor
     
     @staticmethod
