@@ -1,6 +1,7 @@
 # IDE
 .vscode/
 
+data/
 build/
 dist/
 py_flow.egg-info/

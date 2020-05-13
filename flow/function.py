@@ -277,6 +277,7 @@ class NllLoss(autograd.Function):
             loss = np.sum(nll)
         ctx.save_for_backward(target, input, size_average)
         return Tensor(loss)
+    
     @staticmethod
     def backward(ctx, grad_output):
         # grad_output is size (N, 1), output is size (N, C) 
