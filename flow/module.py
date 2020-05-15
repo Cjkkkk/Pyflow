@@ -121,11 +121,11 @@ class Conv2d(Module):
 
         weight_scale = math.sqrt(self.kernel_size[0] * self.kernel_size[1] * self.input_channel / 2)
         if bias:
-            self.bias = Tensor(np.random.standard_normal(self.output_channel) / weight_scale)
+            self.bias = Tensor(np.random.standard_normal(self.output_channel) / weight_scale, require_grad=True)
         else:
             self.bias = None
         self.weight = Tensor(np.random.standard_normal(
-            (self.output_channel, self.input_channel, self.kernel_size[0], self.kernel_size[1])) / weight_scale)
+            (self.output_channel, self.input_channel, self.kernel_size[0], self.kernel_size[1])) / weight_scale, require_grad=True)
 
     def forward(self, x):
         return F.conv2d(x, self.weight, self.bias, self.stride, self.padding)

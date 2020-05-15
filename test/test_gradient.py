@@ -16,7 +16,7 @@ class TestGradientAuto(unittest.TestCase):
         gradient_check(F.sum_, randn((5,4), require_grad=True))
 
     def test_nll_loss_auto(self):
-        gradient_check(F.nll_loss, randn((2,4), require_grad=True), Tensor([0, 1]), True)
+        gradient_check(F.nll_loss, randn((2,4), require_grad=True), Tensor([0, 1]))
 
     def test_square_loss_auto(self):
         gradient_check(F.square_loss, randn((2,4), require_grad=True), randn((2,4), require_grad=True))

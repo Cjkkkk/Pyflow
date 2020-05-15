@@ -2,7 +2,6 @@ from . import autograd
 from .tensor import Tensor
 import numpy as np
 
-
 class Add(autograd.Function):  
     @staticmethod      
     def forward(ctx, a, b):
@@ -249,6 +248,7 @@ class LogSoftmax(autograd.Function):
         data_shift = data - np.max(data)
         data_shift_exp = np.exp(data_shift)
         exp_sum = np.sum(data_shift_exp, axis=1, keepdims=True)
+        exp_sum += 1e-8
         res = data_shift - np.log(exp_sum)
         ctx.save_for_backward(data_shift_exp, exp_sum)
         return Tensor(res)
@@ -267,26 +267,26 @@ class LogSoftmax(autograd.Function):
 
 class NllLoss(autograd.Function):
     @staticmethod
-    def forward(ctx, input, target, size_average):
+    def forward(ctx, input, target, reduction=True):
         # input is size (N, C), target is size (N, 1), output is size (N, 1)
         input, target = input.data, target.data
         nll = [- log_pro[target[idx]] for idx, log_pro in enumerate(input)]
-        if size_average:
+        if reduction:
             loss = np.average(nll)
         else:
             loss = np.sum(nll)
-        ctx.save_for_backward(target, input, size_average)
+        ctx.save_for_backward(target, input, reduction)
         return Tensor(loss)
     
     @staticmethod
     def backward(ctx, grad_output):
         # grad_output is size (N, 1), output is size (N, C) 
-        target, input, size_average = ctx.saved_tensors()
+        target, input, reduction = ctx.saved_tensors()
         output = np.zeros(input.shape)
         batch_size = output.shape[0]
         for idx in range(batch_size):
             output[idx, target[idx]] = - 1
-        if size_average:
+        if reduction:
             output = output * grad_output / batch_size
         else:
             output = output * grad_output

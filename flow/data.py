@@ -3,6 +3,7 @@ from urllib import request
 import gzip
 import pickle
 import os
+from flow.tensor import Tensor
 
 class DataLoader:
     def __init__(self, dataset, batch_size, shuffle, **kwargs):
@@ -10,11 +11,18 @@ class DataLoader:
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.batch_idx = 0
+
         if self.shuffle:
             self.shuffle_idx = np.random.permutation(len(self.dataset))
         else:
             self.shuffle_idx = range(len(self.dataset))
-        
+    
+    def __len__(self):
+        if len(self.dataset) % self.batch_size == 0:
+            return len(self.dataset) // self.batch_size
+        else:
+            return len(self.dataset) // self.batch_size + 1
+    
     def __iter__(self):
         return self
     
@@ -22,12 +30,12 @@ class DataLoader:
         i = self.batch_idx * self.batch_size
         if i < len(self.dataset):
             self.batch_idx += 1
-            shuffle_idx = self.shuffle_idx[i:] if i + self.batch_size > len(self.dataset) else  self.shuffle_idx[i: i + self.batch_size]
+            shuffle_idx = self.shuffle_idx[i:] if i + self.batch_size > len(self.dataset) else self.shuffle_idx[i: i + self.batch_size]
             data_batch = [self.dataset[idx] for idx in shuffle_idx]
             if isinstance(data_batch[0], tuple):
-                return [ np.stack(z) for z in zip(*data_batch)]
+                return [ Tensor(np.stack(z)) for z in zip(*data_batch)]
             else:
-                return np.stack(data_batch)
+                return Tensor(np.stack(data_batch))
         else:
             self.batch_idx = 0
             raise StopIteration
@@ -91,9 +99,9 @@ class MNIST(Dataset):
         train_mnist = {}
         test_mnist = {}
         with gzip.open(os.path.join(self.path, resources[0]), 'rb') as f:
-            train_mnist["images"] = np.frombuffer(f.read(), np.uint8, offset=16)
+            train_mnist["images"] = np.frombuffer(f.read(), np.uint8, offset=16) / 255
         with gzip.open(os.path.join(self.path, resources[1]), 'rb') as f:
-            test_mnist["images"] = np.frombuffer(f.read(), np.uint8, offset=16)
+            test_mnist["images"] = np.frombuffer(f.read(), np.uint8, offset=16) / 255
         with gzip.open(os.path.join(self.path, resources[2]), 'rb') as f:
             train_mnist["labels"] = np.frombuffer(f.read(), np.uint8, offset=8)
         with gzip.open(os.path.join(self.path, resources[3]), 'rb') as f:
