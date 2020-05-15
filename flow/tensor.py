@@ -11,11 +11,18 @@ class Tensor:
         # if required_grad is False, is_leaf is True
         # if required_grad is True and Tensor is created by user, is_leaf is True, False otherwise
         self.is_leaf = True
-        # TODO only require grad when dtype is float
-        if self.data.dtype != np.float64 and self.data.dtype != np.float32 and require_grad:
-            raise RuntimeError("only Tensors of floating point type can set requires_grad=True")
         self.require_grad = require_grad
         self.ref_count = 0
+    
+    @property
+    def require_grad(self):
+        return self._require_grad
+    
+    @require_grad.setter
+    def require_grad(self, new):
+        if self.data.dtype != np.float64 and self.data.dtype != np.float32 and new:
+            raise RuntimeError("only Tensors of floating point type can set requires_grad=True")
+        self._require_grad = new
     
     def __add__(self, other):
         from . import function as F

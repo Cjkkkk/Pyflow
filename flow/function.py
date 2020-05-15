@@ -80,7 +80,7 @@ class ReLU(autograd.Function):
     def backward(ctx, grad_output):
         a = ctx.saved_tensors()[0]
         a_grad = grad_output.copy()
-        a_grad[a.data < 0] = 0
+        a_grad[a < 0] = 0
         return a_grad
 
 class Sum(autograd.Function):
