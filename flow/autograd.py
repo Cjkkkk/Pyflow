@@ -5,10 +5,14 @@ _is_grad_enabled = True
 
 class no_grad:
     def __enter__(self):
+        global _is_grad_enabled
         self.prev = _is_grad_enabled
         _is_grad_enabled = False
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_type is not None:
+            traceback.print_exception(exc_type, exc_value, tb)
+        global _is_grad_enabled
         _is_grad_enabled = self.prev
 
 class Context:
@@ -23,12 +27,16 @@ class Context:
         return self.store
 
 def register_backward(func, output):
-    # TODO use _is_grad_enabled
-    output.grad_fn = func
-    output.is_leaf = False
-    for i in func.inputs: # if all input does not require grad, output does not require grad
-        if isinstance(i, Tensor):
-            output.require_grad = i.require_grad or output.require_grad
+    if _is_grad_enabled:
+        output.grad_fn = func
+        output.is_leaf = False
+        for i in func.inputs: # if all input does not require grad, output does not require grad
+            if isinstance(i, Tensor):
+                output.require_grad = i.require_grad or output.require_grad
+    else:
+        output.grad_fn = None
+        output.is_leaf = True
+        output.require_grad = False
 
 class Function:
     def __init__(self, *inputs):
