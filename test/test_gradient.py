@@ -45,7 +45,7 @@ class TestGradientPytorch(unittest.TestCase):
         flow_output.backward()
         
         assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
-        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad, atol=1e-6)
+        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad.data, atol=1e-6)
 
     def test_conv2d(self):
         torch_conv2d = torch.nn.Conv2d(3, 2, 2, bias=False)
@@ -60,8 +60,8 @@ class TestGradientPytorch(unittest.TestCase):
         flow_output.backward()
 
         assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
-        assert np.allclose(torch_conv2d.weight.grad.detach().numpy(), flow_conv2d.weight.grad, atol=1e-6)
-        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad, atol=1e-6)
+        assert np.allclose(torch_conv2d.weight.grad.detach().numpy(), flow_conv2d.weight.grad.data, atol=1e-6)
+        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad.data, atol=1e-6)
 
     def test_maxpool2d(self):
         torch_maxpool2d = torch.nn.MaxPool2d(2, stride=1)
@@ -75,7 +75,7 @@ class TestGradientPytorch(unittest.TestCase):
         flow_output.backward()
 
         assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
-        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad, atol=1e-6)
+        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad.data, atol=1e-6)
 
 if __name__ == '__main__':
     unittest.main()

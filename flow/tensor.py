@@ -11,6 +11,7 @@ class Tensor:
         # if required_grad is False, is_leaf is True
         # if required_grad is True and Tensor is created by user, is_leaf is True, False otherwise
         self.is_leaf = True
+        # TODO only require grad when dtype is float
         self.require_grad = require_grad
         self.ref_count = 0
     
@@ -98,8 +99,8 @@ class Tensor:
     def __str__(self):
         return "tensor(%s)" % self.data
     
-    def reshape(self, new_shape):
-        self.data = self.data.reshape(new_shape)
+    def reshape(self, *new_shape):
+        self.data = self.data.reshape(*new_shape)
         return self
     
     def copy(self):
@@ -134,14 +135,33 @@ class Tensor:
             return Tensor(self.data[key])
 
     def __setitem__(self, key, value):
+        if isinstance(value, Tensor):
+            value = value.data
+
         if isinstance(key, Tensor):
             # assum key is mask
             self.data[key.data] = value
         else:
             self.data[key] = value
 
+def transpose(tensor):
+    tensor.data = np.transpose(tensor.data)
+    return tensor
+
+def min_(tensor, *args, **kwargs):
+    return Tensor(np.min(tensor.data, *args, **kwargs))
+
+def max_(tensor, *args, **kwargs):
+    return Tensor(np.max(tensor.data, *args, **kwargs))
+
+def log(tensor, *args, **kwargs):
+    return Tensor(np.log(tensor.data, *args, **kwargs))
+
 def ones(shape, require_grad=False):
     return Tensor(np.ones(shape), require_grad)
+
+def zeros(shape, require_grad=False):
+    return Tensor(np.zeros(shape), require_grad)
 
 def randn(shape, require_grad=False):
     return Tensor(np.random.randn(*shape), require_grad)

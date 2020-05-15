@@ -60,6 +60,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 * gradient accum in backward [done]
 * gradient_check_tool [done]
 * no_grad []
+* grad as tensor [done]
 
 ### Module
 * module load/store [done]

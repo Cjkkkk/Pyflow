@@ -1,5 +1,5 @@
 import numpy as np
-from .tensor import Tensor
+from .tensor import Tensor, ones
 
 _is_grad_enabled = True
 
@@ -57,7 +57,7 @@ class Function:
 def backward(tensor, grad):
     if tensor.require_grad:
         if grad is None:
-            grad = np.ones(tensor.data.shape)
+            grad = ones(tensor.data.shape)
         if tensor.grad is None:
             tensor.grad = grad
         else:

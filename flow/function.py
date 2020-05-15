@@ -1,5 +1,5 @@
 from . import autograd
-from .tensor import Tensor
+from .tensor import Tensor, ones, zeros, transpose, max_
 import numpy as np
 
 class Add(autograd.Function):  
@@ -64,8 +64,8 @@ class MM(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         a, b = ctx.saved_tensors()
-        a_grad = np.matmul(grad_output, np.transpose(b.data))
-        b_grad = np.matmul(np.transpose(a.data), grad_output)
+        a_grad = np.matmul(grad_output.data, np.transpose(b.data))
+        b_grad = np.matmul(np.transpose(a.data), grad_output.data)
         return a_grad, b_grad
 
 class ReLU(autograd.Function):
@@ -79,7 +79,7 @@ class ReLU(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         a = ctx.saved_tensors()[0]
-        a_grad = np.copy(grad_output)
+        a_grad = grad_output.copy()
         a_grad[a.data < 0] = 0
         return a_grad
 
@@ -93,21 +93,21 @@ class Sum(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         a = ctx.saved_tensors()[0]
-        a_grad = grad_output * np.ones(a.data.shape)
+        a_grad = grad_output * ones(a.shape)
         return a_grad
 
 class SquareLoss(autograd.Function):
     @staticmethod
     def forward(ctx, a, b):
         ctx.save_for_backward(a, b)
-        new_tensor = Tensor(np.sum(np.square(a.data - b.data)))
+        new_tensor = Tensor(np.sum(np.square((a - b).data)))
         return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):
         a, b = ctx.saved_tensors()
-        a_grad = grad_output * 2.0 * (a.data - b.data)
-        b_grad = grad_output * -2.0 * (a.data - b.data)
+        a_grad = grad_output * 2.0 * (a - b)
+        b_grad = grad_output * -2.0 * (a - b)
         return a_grad, b_grad
 
 class MaxPool2d(autograd.Function):
@@ -138,18 +138,16 @@ class MaxPool2d(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        # TODO
         tensor, kernel_size, stride, padding = ctx.saved_tensors()
-        data = tensor.data
-        batchsize, channel, height, width = data.shape
+        batchsize, channel, height, width = tensor.shape
         batchsize, channel, output_height, output_width = grad_output.shape
         
-        grad = np.zeros(data.shape)
+        grad = zeros(tensor.shape)
         for i in range(batchsize):
             for j in range(channel):
                 for h in range(0, height - kernel_size[0] + 1, stride[0]):
                     for w in range(0, width - kernel_size[1] + 1, stride[1]):
-                        mask = (data[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] == np.max(data[i, j, h : h + kernel_size[0], w : w + kernel_size[1]]))
+                        mask = tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] == max_(tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]])
                         grad[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] += mask * grad_output[i, j, h // stride[0], w // stride[1]]
         
         return grad[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]], None, None, None
@@ -204,16 +202,16 @@ class Conv2d(autograd.Function):
         output_channel, input_channel, kernel_height, kernel_width = weight_shape
         
         # init gradient for img2col
-        col_weight_gradient = np.zeros(col_weight.shape)
+        col_weight_gradient = zeros(col_weight.shape)
         conv_out_gradient = grad_output.reshape(batchsize, output_channel, -1)
         
         # init gradient for input tensor
-        bias_gradient = np.ones(output_channel) if bias is None else None
-        input_gradient = np.zeros(input_shape)
+        bias_gradient = ones(output_channel) if bias is None else None
+        input_gradient = zeros(input_shape)
     
         for i in range(batchsize):
-            col_image_gradient = np.matmul(np.transpose(conv_out_gradient[i]), col_weight)
-            col_weight_gradient += np.matmul(conv_out_gradient[i], col_image[i])
+            col_image_gradient = mm(transpose(conv_out_gradient[i]), col_weight)
+            col_weight_gradient += mm(conv_out_gradient[i], col_image[i])
             
             j = 0
             for h in range(0, height - kernel_height + 1, stride[0]):
@@ -230,14 +228,14 @@ class Conv2d(autograd.Function):
 class View(autograd.Function):
     @staticmethod
     def forward(ctx, tensor, shape):
-        ctx.save_for_backward(tensor.data.shape)
+        ctx.save_for_backward(tensor.shape)
         new_tensor = tensor.copy().reshape(shape)
         return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):
         original_shape = ctx.saved_tensors()[0]
-        grad = np.copy(grad_output).reshape(original_shape)
+        grad = grad_output.copy().reshape(original_shape)
         return grad
 
 class LogSoftmax(autograd.Function):
@@ -258,11 +256,11 @@ class LogSoftmax(autograd.Function):
         data_shift_exp, exp_sum = ctx.saved_tensors()
         e = - data_shift_exp / exp_sum
         N, C = e.shape
-        grad = np.zeros((N, C))
+        grad = zeros((N, C))
         for i in range(N):
             jac = np.tile(e[i], (C, 1))
             jac[np.diag_indices_from(jac)] += 1
-            grad[i] = np.matmul(np.transpose(jac), grad_output[i])
+            grad[i] = mm(Tensor(np.transpose(jac)), grad_output[i])
         return grad
 
 class NllLoss(autograd.Function):
@@ -282,7 +280,7 @@ class NllLoss(autograd.Function):
     def backward(ctx, grad_output):
         # grad_output is size (N, 1), output is size (N, C) 
         target, input, reduction = ctx.saved_tensors()
-        output = np.zeros(input.shape)
+        output = zeros(input.shape)
         batch_size = output.shape[0]
         for idx in range(batch_size):
             output[idx, target[idx]] = - 1
