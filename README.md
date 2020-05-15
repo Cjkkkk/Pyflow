@@ -77,6 +77,6 @@ PS: `pytorch` is required to check the correctness of implementation.
 * normal sharing []
 
 ### Other
-* dataloader []
+* dataloader [done]
 * hide numpy from user []
 * dot graph []
