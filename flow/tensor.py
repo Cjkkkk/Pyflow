@@ -12,6 +12,8 @@ class Tensor:
         # if required_grad is True and Tensor is created by user, is_leaf is True, False otherwise
         self.is_leaf = True
         # TODO only require grad when dtype is float
+        if self.data.dtype != np.float64 and self.data.dtype != np.float32 and require_grad:
+            raise RuntimeError("only Tensors of floating point type can set requires_grad=True")
         self.require_grad = require_grad
         self.ref_count = 0
     
@@ -149,12 +151,15 @@ def transpose(tensor):
     return tensor
 
 def min_(tensor, *args, **kwargs):
+    # TODO calculate gradient
     return Tensor(np.min(tensor.data, *args, **kwargs))
 
 def max_(tensor, *args, **kwargs):
+    # TODO calculate gradient
     return Tensor(np.max(tensor.data, *args, **kwargs))
 
 def log(tensor, *args, **kwargs):
+    # TODO calculate gradient
     return Tensor(np.log(tensor.data, *args, **kwargs))
 
 def ones(shape, require_grad=False):

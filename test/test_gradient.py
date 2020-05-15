@@ -70,6 +70,7 @@ class TestGradientPytorch(unittest.TestCase):
         torch_output.backward(torch.ones(torch_output.shape))
 
         flow_maxpool2d = MaxPool2d(2)
+        print(torch_input.detach().numpy().dtype)
         flow_input = Tensor(torch_input.detach().numpy(), require_grad=True)
         flow_output = flow_maxpool2d(flow_input)
         flow_output.backward()
