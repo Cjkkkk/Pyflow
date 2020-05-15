@@ -1,6 +1,14 @@
 import numpy as np
 from .tensor import Tensor
 
+def _make_pair(v):
+    if isinstance(v, int):
+        return (v, v)
+    elif isinstance(v, tuple) and len(v) == 2:
+        return v
+    else:
+        raise ValueError("expect type int or tuple.")
+
 def compute_loc(idx, shape):
     loc = [0] * len(shape)
     for i in range(len(shape)):

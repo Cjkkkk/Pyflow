@@ -1,5 +1,6 @@
 from .tensor import Tensor
 from . import function as F
+from .utils import _make_pair
 import numpy as np
 import math
 
@@ -82,15 +83,6 @@ class Module:
         raise NotImplemented()
 
 
-def _make_pair(v):
-    if isinstance(v, int):
-        return (v, v)
-    elif isinstance(v, tuple) and len(v) == 2:
-        return v
-    else:
-        raise ValueError("expect type int or tuple.")
-
-
 class Identity(Module):
     def __init__(self, tensor):
         super().__init__()
@@ -129,13 +121,3 @@ class Conv2d(Module):
 
     def forward(self, x):
         return F.conv2d(x, self.weight, self.bias, self.stride, self.padding)
-
-class MaxPool2d(Module):
-    def __init__(self, kernel_size, stride=1, padding=0):
-        super().__init__()
-        self.kernel_size = _make_pair(kernel_size)
-        self.stride = _make_pair(stride)
-        self.padding = _make_pair(padding)
-
-    def forward(self, x):
-        return F.maxpool2d(x, self.kernel_size, self.stride, self.padding)

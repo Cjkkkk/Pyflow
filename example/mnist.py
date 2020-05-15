@@ -1,6 +1,6 @@
 import flow.function as F
 from flow.tensor import Tensor
-from flow.module import Conv2d, Linear, MaxPool2d, Module
+from flow.module import Conv2d, Linear, Module
 from flow.optim import SGD
 from flow.data import MNIST, DataLoader
 import numpy as np
@@ -15,12 +15,11 @@ class Net(Module):
         self.conv2 = Conv2d(20, 50, 5, 1, bias=False)
         self.fc1 = Linear(10*10*50, 500)
         self.fc2 = Linear(500, 10)
-        self.maxpool2d1 = MaxPool2d(2, 2)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
-        x = self.maxpool2d1(x)
+        x = F.max_pool2d(x, 2, 2)
         x = F.view(x, (-1, 10*10*50))
         x = F.relu(self.fc1(x))
         x = self.fc2(x)

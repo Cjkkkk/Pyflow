@@ -1,4 +1,5 @@
 from . import autograd
+from .utils import _make_pair
 from .tensor import Tensor, ones, zeros, transpose, max_
 import numpy as np
 
@@ -112,7 +113,11 @@ class SquareLoss(autograd.Function):
 
 class MaxPool2d(autograd.Function):
     @staticmethod
-    def forward(ctx, tensor, kernel_size, stride, padding):
+    def forward(ctx, tensor, kernel_size, stride=1, padding=0):
+        kernel_size = _make_pair(kernel_size)
+        stride = _make_pair(stride)
+        padding = _make_pair(padding)
+
         data = tensor.data
         data = np.pad(data, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
         batchsize, channel, height, width = data.shape
@@ -300,7 +305,7 @@ sum_ = Sum.apply
 square_loss = SquareLoss.apply
 relu = ReLU.apply
 conv2d = Conv2d.apply
-maxpool2d = MaxPool2d.apply
+max_pool2d = MaxPool2d.apply
 log_softmax = LogSoftmax.apply
 view = View.apply
 nll_loss = NllLoss.apply

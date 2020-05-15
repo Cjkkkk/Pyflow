@@ -50,7 +50,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 ### Operator
 * mm [done]
 * relu [done]
-* maxpool2d [done]
+* max_pool2d [done]
 * conv2d [done]
 * log_softmax [done]
 * view [done]

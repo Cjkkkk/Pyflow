@@ -6,7 +6,7 @@ import torch.nn.functional as PF
 import flow.function as F
 from flow.tensor import Tensor, randn
 from flow.utils import gradient_check
-from flow.module import MaxPool2d, Conv2d
+from flow.module import Conv2d
 
 
 
@@ -69,10 +69,8 @@ class TestGradientPytorch(unittest.TestCase):
         torch_output = torch_maxpool2d(torch_input)
         torch_output.backward(torch.ones(torch_output.shape))
 
-        flow_maxpool2d = MaxPool2d(2)
-        print(torch_input.detach().numpy().dtype)
         flow_input = Tensor(torch_input.detach().numpy(), require_grad=True)
-        flow_output = flow_maxpool2d(flow_input)
+        flow_output = F.max_pool2d(flow_input, 2, 1)
         flow_output.backward()
 
         assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
