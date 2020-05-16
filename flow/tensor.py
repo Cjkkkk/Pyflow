@@ -116,15 +116,24 @@ class Tensor:
         return Tensor(self.data.argmax(*args, **kwargs))
 
     def copy(self):
-        new_tensor = Tensor(np.copy(self.data), self.require_grad)
+        new_tensor = Tensor(np.copy(self.data))
         return new_tensor
 
+     def item(self):
+        if self.size != 1:
+            raise ValueError("tensor size is larger than 1, ambiguous value.")
+        return self.data.item(0)
+    
     def _print_graph(self, id=0, ident=""):
         pass
 
     @property
     def shape(self):
         return self.data.shape
+    
+    @property
+    def size(self):
+        return self.data.size
     
     @property
     def dtype(self):
