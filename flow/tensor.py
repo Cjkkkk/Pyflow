@@ -119,7 +119,7 @@ class Tensor:
         new_tensor = Tensor(np.copy(self.data))
         return new_tensor
 
-     def item(self):
+    def item(self):
         if self.size != 1:
             raise ValueError("tensor size is larger than 1, ambiguous value.")
         return self.data.item(0)
