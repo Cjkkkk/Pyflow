@@ -11,17 +11,12 @@ class Net(Module):
     """ConvNet -> Max_Pool -> RELU -> ConvNet -> Max_Pool -> RELU -> FC -> RELU -> FC -> SOFTMAX"""
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = Conv2d(1, 20, 5, 1, bias=False)
-        self.conv2 = Conv2d(20, 50, 5, 1, bias=False)
-        self.fc1 = Linear(10*10*50, 500)
-        self.fc2 = Linear(500, 10)
+        self.fc1 = Linear(784, 200)
+        self.fc2 = Linear(200, 10)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.max_pool2d(x, 2, 2)
-        x = F.view(x, (-1, 10*10*50))
-        x = F.relu(self.fc1(x))
+        x = F.view(x, (-1, 784))
+        x = self.fc1(x)
         x = self.fc2(x)
         return F.log_softmax(x)
 
@@ -45,9 +40,9 @@ def test(args, model, device, test_loader):
     correct = 0
     for data, target in test_loader:
         output = model(data)
-        test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+        test_loss += F.nll_loss(output, target, reduction='sum')  # sum up batch loss
         pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-        correct += pred.eq(target.view_as(pred)).sum().item()
+        correct += (pred == target.view_as(pred)).sum()
 
     test_loss /= len(test_loader.dataset)
 
@@ -64,7 +59,7 @@ def main():
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=14, metavar='N',
                         help='number of epochs to train (default: 14)')
-    parser.add_argument('--lr', type=float, default=1.0, metavar='LR',
+    parser.add_argument('--lr', type=float, default=0.000001, metavar='LR',
                         help='learning rate (default: 1.0)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')

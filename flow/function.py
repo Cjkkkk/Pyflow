@@ -67,7 +67,7 @@ class MM(autograd.Function):
         a, b = ctx.saved_tensors()
         a_grad = np.matmul(grad_output.data, np.transpose(b.data))
         b_grad = np.matmul(np.transpose(a.data), grad_output.data)
-        return a_grad, b_grad
+        return Tensor(a_grad), Tensor(b_grad)
 
 class ReLU(autograd.Function):
     @staticmethod
@@ -245,12 +245,12 @@ class View(autograd.Function):
 
 class LogSoftmax(autograd.Function):
     @staticmethod
-    def forward(ctx, tensor):
+    def forward(ctx, tensor, dim):
         # tensor size is (N, C)
         data = tensor.data
         data_shift = data - np.max(data)
         data_shift_exp = np.exp(data_shift)
-        exp_sum = np.sum(data_shift_exp, axis=1, keepdims=True)
+        exp_sum = np.sum(data_shift_exp, axis=dim, keepdims=True)
         exp_sum += 1e-8
         res = data_shift - np.log(exp_sum)
         ctx.save_for_backward(data_shift_exp, exp_sum)

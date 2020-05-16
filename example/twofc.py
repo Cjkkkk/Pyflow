@@ -11,8 +11,8 @@ class TwoFc(Module):
 
     def forward(self, a):
         x = self.fc1(a)
-        y = self.fc2(x)
-        return y
+        x = self.fc2(x)
+        return x
 
 # y = 3x_1 + 2x_2
 model = TwoFc()

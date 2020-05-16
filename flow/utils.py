@@ -17,8 +17,8 @@ def compute_loc(idx, shape):
         idx = idx % prod
     return tuple(loc)
 
-def gradient_check(f, *args):
-    out = f(*args)
+def gradient_check(f, *args, **kwargs):
+    out = f(*args, **kwargs)
     out.backward()
     eps = 1e-8
     for arg in args:
@@ -31,7 +31,7 @@ def gradient_check(f, *args):
             for idx in range(size):
                 loc = compute_loc(idx, shape)
                 arg.data[loc] += eps
-                out_eps = f(*args)
+                out_eps = f(*args, **kwargs)
                 gradient[loc] = np.sum(out_eps.data - out.data) / eps
                 arg.data[loc] -= eps
             assert np.allclose(gradient, arg.grad.data, atol=1e-6)

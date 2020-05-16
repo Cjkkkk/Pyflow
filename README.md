@@ -55,6 +55,8 @@ PS: `pytorch` is required to check the correctness of implementation.
 * log_softmax [done]
 * view [done]
 * nll_loss [done]
+* in-place add/sub/mul/div []
+
 
 ### Autograd
 * gradient accum in backward [done]

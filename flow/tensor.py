@@ -29,7 +29,7 @@ class Tensor:
         if not isinstance(other, Tensor):
             other = Tensor(other)
         return F.add(self, other)
-
+    
     def __mul__(self, other):
         from . import function as F
         if not isinstance(other, Tensor):
@@ -111,10 +111,16 @@ class Tensor:
     def reshape(self, *new_shape):
         self.data = self.data.reshape(*new_shape)
         return self
-    
+
+    def argmax(self, *args, **kwargs):
+        return Tensor(self.data.argmax(*args, **kwargs))
+
     def copy(self):
         new_tensor = Tensor(np.copy(self.data), self.require_grad)
         return new_tensor
+
+    def _print_graph(self, id=0, ident=""):
+        pass
 
     @property
     def shape(self):
