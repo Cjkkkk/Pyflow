@@ -115,10 +115,17 @@ class Tensor:
     def argmax(self, *args, **kwargs):
         return Tensor(self.data.argmax(*args, **kwargs))
 
+    def sum(self, *args, **kwargs):
+        from . import function as F
+        return F.sum(self)
+
     def copy(self):
         new_tensor = Tensor(np.copy(self.data))
         return new_tensor
 
+    def astype(self, new_type):
+        return Tensor(self.data.astype(new_type))
+    
     def item(self):
         if self.size != 1:
             raise ValueError("tensor size is larger than 1, ambiguous value.")

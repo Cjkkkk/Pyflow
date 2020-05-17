@@ -6,7 +6,7 @@ from flow.data import MNIST, DataLoader
 import numpy as np
 import pickle
 import argparse
-
+from PIL import Image
 class Net(Module):
     """ConvNet -> Max_Pool -> RELU -> ConvNet -> Max_Pool -> RELU -> FC -> RELU -> FC -> SOFTMAX"""
     def __init__(self):
@@ -18,31 +18,33 @@ class Net(Module):
         x = F.view(x, (-1, 784))
         x = self.fc1(x)
         x = self.fc2(x)
-        return F.log_softmax(x)
+        return F.log_softmax(x, 1)
 
 def train(args, model, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         optimizer.zero_grad()
         output = model(data)
-        loss = F.nll_loss(output, target)
+        loss = F.nll_loss(output, target, reduction='average')
         loss.backward()
         optimizer.step()
         
         if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {}'.format(
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * data.shape[0], len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss))
+                100. * batch_idx / len(train_loader), loss.item()))
 
-def test(args, model, device, test_loader):
+def test(args, model, test_loader):
     model.eval()
     test_loss = 0
     correct = 0
     for data, target in test_loader:
         output = model(data)
-        test_loss += F.nll_loss(output, target, reduction='sum')  # sum up batch loss
-        pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-        correct += (pred == target.view_as(pred)).sum()
+        # sum up batch loss
+        test_loss += F.nll_loss(output, target, reduction='sum').item()
+        # get the index of the max log-probability
+        pred = output.argmax(axis=1) 
+        correct += (pred == target).sum_().item()
 
     test_loss /= len(test_loader.dataset)
 
@@ -53,7 +55,7 @@ def test(args, model, device, test_loader):
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyFlow MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')

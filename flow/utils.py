@@ -34,4 +34,4 @@ def gradient_check(f, *args, **kwargs):
                 out_eps = f(*args, **kwargs)
                 gradient[loc] = np.sum(out_eps.data - out.data) / eps
                 arg.data[loc] -= eps
-            assert np.allclose(gradient, arg.grad.data, atol=1e-6)
+            assert np.allclose(gradient, arg.grad.data, atol=1e-8)

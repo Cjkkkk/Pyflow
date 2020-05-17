@@ -86,9 +86,9 @@ class ReLU(autograd.Function):
 
 class Sum(autograd.Function):
     @staticmethod
-    def forward(ctx, a):
+    def forward(ctx, a, axis=None):
         ctx.save_for_backward(a)
-        new_tensor = Tensor(np.sum(a.data))
+        new_tensor = Tensor(np.sum(a.data, axis=axis))
         return new_tensor
     
     @staticmethod
@@ -97,6 +97,46 @@ class Sum(autograd.Function):
         a_grad = grad_output * ones(a.shape)
         return a_grad
 
+class Min(autograd.Function):
+    @staticmethod
+    def forward(ctx, a, axis=None):
+        idx = np.argmin(a.data, axis=axis)
+        ctx.save_for_backward(a, axis, idx)
+        new_tensor = Tensor(np.min(a.data, axis=axis))
+        return new_tensor
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        a, axis, idx = ctx.saved_tensors()
+        grad = np.zeros(a.shape)
+        if axis is None:
+            grad.itemset(idx, grad_output.item())
+        else:
+            expand_idx = np.expand_dims(idx, axis=axis)
+            filled_grad = np.expand_dims(grad_output.data, axis=axis)
+            np.put_along_axis(grad, expand_idx, filled_grad, axis=axis)
+        return Tensor(grad)
+
+class Max(autograd.Function):
+    @staticmethod
+    def forward(ctx, a, axis=None):
+        idx = np.argmax(a.data, axis=axis)
+        ctx.save_for_backward(a, axis, idx)
+        new_tensor = Tensor(np.max(a.data, axis=axis))
+        return new_tensor
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        a, axis, idx = ctx.saved_tensors()
+        grad = np.zeros(a.shape)
+        if axis is None:
+            grad.itemset(idx, grad_output.item())
+        else:
+            expand_idx = np.expand_dims(idx, axis=axis)
+            filled_grad = np.expand_dims(grad_output.data, axis=axis)
+            np.put_along_axis(grad, expand_idx, filled_grad, axis=axis)
+        return Tensor(grad)
+    
 class SquareLoss(autograd.Function):
     @staticmethod
     def forward(ctx, a, b):
@@ -270,14 +310,16 @@ class LogSoftmax(autograd.Function):
 
 class NllLoss(autograd.Function):
     @staticmethod
-    def forward(ctx, input, target, reduction=True):
+    def forward(ctx, input, target, reduction="average"):
         # input is size (N, C), target is size (N, 1), output is size (N, 1)
         input, target = input.data, target.data
         nll = [- log_pro[target[idx]] for idx, log_pro in enumerate(input)]
-        if reduction:
+        if reduction == "average":
             loss = np.average(nll)
-        else:
+        elif reduction == "sum":
             loss = np.sum(nll)
+        else:
+            raise RuntimeError("unsupported reducetion type.")
         ctx.save_for_backward(target, input, reduction)
         return Tensor(loss)
     
@@ -300,6 +342,8 @@ mul = Mul.apply
 sub = Sub.apply
 true_div = Truediv.apply
 
+max = Max.apply
+min = Min.apply
 mm = MM.apply
 sum_ = Sum.apply
 square_loss = SquareLoss.apply
