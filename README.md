@@ -71,7 +71,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 * test []
 
 ### Example
-* mnist example []
+* mnist example [done]
 
 ### Memory Optimization
 * ref count []

@@ -2,18 +2,19 @@ import unittest
 import numpy as np
 import torch
 import torch.nn.functional as PF
+import torch.optim as torch_optim
 
 import flow.function as F
 from flow.tensor import Tensor, randn
 from flow.utils import gradient_check
 from flow.module import Conv2d
-
+import flow.optim as flow_optim
 
 
 class TestGradientAuto(unittest.TestCase):
     # check using gradient_check tools
     def test_max_auto(self):
-        gradient_check(F.max, randn((5,4), require_grad=True), axis=1)
+        gradient_check(F.max, randn((5,4,3), require_grad=True), axis=1)
         gradient_check(F.max, randn((5,4), require_grad=True), axis=None)
 
     def test_min_auto(self):
@@ -21,7 +22,7 @@ class TestGradientAuto(unittest.TestCase):
         gradient_check(F.min, randn((5,4), require_grad=True), axis=None)
 
     def test_sum_auto(self):
-        gradient_check(F.sum_, randn((5,4), require_grad=True))
+        gradient_check(F.sum, randn((5,4), require_grad=True))
 
     def test_nll_loss_auto(self):
         gradient_check(F.nll_loss, randn((2,4), require_grad=True), Tensor([0, 1]))
@@ -86,15 +87,27 @@ class TestGradientPytorch(unittest.TestCase):
     
     def test_nll_loss(self):
         torch_input = torch.rand((4, 4), requires_grad=True)
-        torch_output = PF.nll_loss(torch_input, torch.tensor([0, 1, 0, 0]))
+        torch_output = PF.nll_loss(torch_input, torch.tensor([0, 1, 2, 3]))
         torch_output.backward(torch.ones(torch_output.shape))
 
         flow_input = Tensor(torch_input.detach().numpy(), require_grad=True)
-        flow_output = F.nll_loss(flow_input, Tensor([0, 1, 0, 0]))
+        flow_output = F.nll_loss(flow_input, Tensor([0, 1, 2, 3]))
         flow_output.backward()
 
         assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
         assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad.data, atol=1e-6)
+
+        torch_input = torch.rand((4, 4), requires_grad=True)
+        torch_output = PF.nll_loss(torch_input, torch.tensor([0, 1, 2, 3]), reduction="sum")
+        torch_output.backward(torch.ones(torch_output.shape))
+
+        flow_input = Tensor(torch_input.detach().numpy(), require_grad=True)
+        flow_output = F.nll_loss(flow_input, Tensor([0, 1, 2, 3]), reduction="sum")
+        flow_output.backward()
+
+        assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
+        assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad.data, atol=1e-6)
+
 
     def test_relu(self):
         torch_input = torch.rand((1, 3, 3, 3), requires_grad=True)
@@ -130,5 +143,25 @@ class TestGradientPytorch(unittest.TestCase):
 
         assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
         assert np.allclose(torch_input.grad.detach().numpy(), flow_input.grad.data, atol=1e-6)
+
+    def test_optim_SGD(self):
+        for i in range(10):
+            torch_input = torch.rand((2, 2), requires_grad=True)
+            flow_input = Tensor(torch_input.detach().numpy().copy(), require_grad=True)
+
+            torch_sgd = torch_optim.SGD([torch_input], lr=0.01)
+            torch_output, _ = torch.min(torch_input, dim=1)
+            torch_output.backward(torch.ones(torch_output.shape))
+            torch_sgd.step()
+            torch_sgd.zero_grad()
+
+            flow_sgd = flow_optim.SGD([flow_input], lr=0.01)
+            flow_output = F.min(flow_input, axis=1)
+            flow_output.backward()
+            flow_sgd.step()
+            flow_sgd.zero_grad()
+            
+            assert np.allclose(torch_output.detach().numpy(), flow_output.data, atol=1e-6)
+
 if __name__ == '__main__':
     unittest.main()

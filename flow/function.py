@@ -1,6 +1,6 @@
 from . import autograd
 from .utils import _make_pair
-from .tensor import Tensor, ones, zeros, transpose, max_
+from .tensor import Tensor, ones, zeros, transpose
 import numpy as np
 
 class Add(autograd.Function):  
@@ -192,7 +192,7 @@ class MaxPool2d(autograd.Function):
             for j in range(channel):
                 for h in range(0, height - kernel_size[0] + 1, stride[0]):
                     for w in range(0, width - kernel_size[1] + 1, stride[1]):
-                        mask = tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] == max_(tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]])
+                        mask = tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] == max(tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]])
                         grad[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] += mask * grad_output[i, j, h // stride[0], w // stride[1]]
         
         return grad[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]], None, None, None
@@ -291,7 +291,7 @@ class LogSoftmax(autograd.Function):
         data_shift = data - np.max(data)
         data_shift_exp = np.exp(data_shift)
         exp_sum = np.sum(data_shift_exp, axis=dim, keepdims=True)
-        exp_sum += 1e-8
+        exp_sum[exp_sum == 0] = 1e-10
         res = data_shift - np.log(exp_sum)
         ctx.save_for_backward(data_shift_exp, exp_sum)
         return Tensor(res)
@@ -331,10 +331,12 @@ class NllLoss(autograd.Function):
         batch_size = output.shape[0]
         for idx in range(batch_size):
             output[idx, target[idx]] = - 1
-        if reduction:
+        if reduction == "average":
             output = output * grad_output / batch_size
-        else:
+        elif reduction == "sum":
             output = output * grad_output
+        else:
+            raise RuntimeError("unsupported reducetion type.")
         return output, None, None
 
 add = Add.apply
@@ -345,7 +347,7 @@ true_div = Truediv.apply
 max = Max.apply
 min = Min.apply
 mm = MM.apply
-sum_ = Sum.apply
+sum = Sum.apply
 square_loss = SquareLoss.apply
 relu = ReLU.apply
 conv2d = Conv2d.apply

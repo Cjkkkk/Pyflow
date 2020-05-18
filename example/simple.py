@@ -14,7 +14,7 @@ class MyNet(Module):
     def forward(self):
         x = F.mm(self.b(), self.a())
         y = self.c() + x
-        z = F.sum_(y)
+        z = F.sum(y)
         return z
 
 net = MyNet()

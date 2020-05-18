@@ -115,6 +115,14 @@ class Tensor:
     def argmax(self, *args, **kwargs):
         return Tensor(self.data.argmax(*args, **kwargs))
 
+    def min(self, *args, **kwargs):
+        from . import function as F
+        return F.min(self)
+
+    def max(self, *args, **kwargs):
+        from . import function as F
+        return F.max(self)
+    
     def sum(self, *args, **kwargs):
         from . import function as F
         return F.sum(self)
@@ -179,14 +187,6 @@ def transpose(tensor):
     tensor.data = np.transpose(tensor.data)
     return tensor
 
-def min_(tensor, *args, **kwargs):
-    # TODO calculate gradient
-    return Tensor(np.min(tensor.data, *args, **kwargs))
-
-def max_(tensor, *args, **kwargs):
-    # TODO calculate gradient
-    return Tensor(np.max(tensor.data, *args, **kwargs))
-
 def log(tensor, *args, **kwargs):
     # TODO calculate gradient
     return Tensor(np.log(tensor.data, *args, **kwargs))
@@ -199,3 +199,6 @@ def zeros(shape, require_grad=False):
 
 def randn(shape, require_grad=False):
     return Tensor(np.random.randn(*shape), require_grad)
+
+def stack(tensors):
+    return Tensor(np.stack([t.data for t in tensors]))

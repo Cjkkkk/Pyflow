@@ -3,7 +3,7 @@ from urllib import request
 import gzip
 import pickle
 import os
-from flow.tensor import Tensor
+from flow.tensor import Tensor, stack
 
 class DataLoader:
     def __init__(self, dataset, batch_size, shuffle, **kwargs):
@@ -33,17 +33,19 @@ class DataLoader:
             shuffle_idx = self.shuffle_idx[i:] if i + self.batch_size > len(self.dataset) else self.shuffle_idx[i: i + self.batch_size]
             data_batch = [self.dataset[idx] for idx in shuffle_idx]
             if isinstance(data_batch[0], tuple):
-                return [ Tensor(np.stack(z)) for z in zip(*data_batch)]
+                return [ stack(z) for z in zip(*data_batch)]
             else:
-                return Tensor(np.stack(data_batch))
+                return stack(data_batch)
         else:
             self.batch_idx = 0
             raise StopIteration
 
 class Dataset:
-    def __init__(self, path, train):
+    def __init__(self, path, train, transform=None, target_transform=None):
         self.path = path
         self.train = train
+        self.transform = transform
+        self.target_transform = target_transform
     
     def __len__(self):
         raise NotImplemented("must implement __len__ method of dataset.")
@@ -65,8 +67,8 @@ resources = [
 ]
 
 class MNIST(Dataset):
-    def __init__(self, path, train, download):
-        super().__init__(path, train)
+    def __init__(self, path, train, download, transform=None, target_transform=None):
+        super().__init__(path, train, transform, target_transform)
         if download:
             self.download()
         
@@ -80,7 +82,12 @@ class MNIST(Dataset):
             return 10000
     
     def __getitem__(self, index):
-        return self.data["images"][index], self.data["labels"][index]
+        img, target = Tensor(self.data["images"][index]), Tensor(self.data["labels"][index])
+        if self.transform is not None:
+            img = self.transform(img)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+        return img, target
         
     def check_exist(self):
         return (os.path.exists(os.path.join(self.path, "train_mnist.pkl")) and os.path.exists(os.path.join(self.path, "test_mnist.pkl")))
