@@ -26,12 +26,15 @@ class Context:
 
 def register_backward(func, output):
     if no_grad._is_grad_enabled:
-        output.grad_fn = func
-        output.is_leaf = False
         for i in func.inputs: # if all input does not require grad, output does not require grad
             if isinstance(i, Tensor):
                 output.require_grad = i.require_grad or output.require_grad
+        if output.require_grad:
+            output.grad_fn = func
+            output.is_leaf = False
+
     else:
+        # just to make sure no state is modified
         output.grad_fn = None
         output.is_leaf = True
         output.require_grad = False
