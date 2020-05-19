@@ -5,9 +5,13 @@ import numpy as np
 
 class Add(autograd.Function):  
     @staticmethod      
-    def forward(ctx, a, b):
-        new_tensor = Tensor(a.data + b.data)
-        return new_tensor
+    def forward(ctx, a, b, inplace=False):
+        if inplace:
+            a.data += b.data
+            return a
+        else:
+            new_tensor = Tensor(a.data + b.data)
+            return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):
@@ -17,10 +21,14 @@ class Add(autograd.Function):
 
 class Mul(autograd.Function):
     @staticmethod
-    def forward(ctx, a, b):
+    def forward(ctx, a, b, inplace=False):
         ctx.save_for_backward(a, b)
-        new_tensor = Tensor(a.data * b.data)
-        return new_tensor
+        if inplace:
+            a.data *= b.data
+            return a
+        else:
+            new_tensor = Tensor(a.data * b.data)
+            return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):
@@ -31,9 +39,13 @@ class Mul(autograd.Function):
 
 class Sub(autograd.Function):
     @staticmethod
-    def forward(ctx, a, b):
-        new_tensor = Tensor(a.data - b.data)
-        return new_tensor
+    def forward(ctx, a, b, inplace=False):
+        if inplace:
+            a.data -= b.data
+            return a
+        else:
+            new_tensor = Tensor(a.data - b.data)
+            return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):
@@ -43,10 +55,14 @@ class Sub(autograd.Function):
 
 class Truediv(autograd.Function):
     @staticmethod
-    def forward(ctx, a, b):
+    def forward(ctx, a, b, inplace=False):
         ctx.save_for_backward(a, b)
-        new_tensor = Tensor(a.data / b.data)
-        return new_tensor
+        if inplace:
+            a.data /= b.data
+            return a
+        else:
+            new_tensor = Tensor(a.data / b.data)
+            return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):

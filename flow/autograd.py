@@ -1,4 +1,5 @@
 import numpy as np
+import traceback
 from .tensor import Tensor, ones
 
 
@@ -19,6 +20,7 @@ class Context:
         # update ref_count for memory optimization
         for s in self.store:
             if isinstance(s, Tensor):
+                # TODO raise error if variable needed by gradient computation is used in inplace operation
                 s.ref_count += 1
     
     def saved_tensors(self):
@@ -42,15 +44,19 @@ def register_backward(func, output):
 class Function:
     def __init__(self, *args, **kwargs):
         self.ctx = Context()
-        self.inputs = [ v for v in [*args, *kwargs.values()] if isinstance(v, Tensor) ]
-        for inp in self.inputs:
-            # update ref_count for memory optimization
-            inp.ref_count += 1
+        self.inputs = None
+        if no_grad._is_grad_enabled:
+            self.inputs = [ v for v in [*args, *kwargs.values()] if isinstance(v, Tensor) ]
+            for inp in self.inputs:
+                # update ref_count for memory optimization
+                inp.ref_count += 1
     
     @classmethod
     def apply(cls, *args, **kwargs):
-        func = cls(*args)
-        output = cls.forward(func.ctx, *args, **kwargs)
+        func = cls(*args, **kwargs)
+        with no_grad():
+            # should not build computation graph in function forward method
+            output = cls.forward(func.ctx, *args, **kwargs)
         register_backward(func, output)
         return output
 
@@ -69,6 +75,7 @@ def backward(tensor, grad):
         if tensor.grad is None:
             tensor.grad = grad
         else:
+            # TODO fix this bug, iadd is not implemented
             tensor.grad += grad
         if not tensor.is_leaf:
             input_grads = tensor.grad_fn.backward(tensor.grad_fn.ctx, tensor.grad)

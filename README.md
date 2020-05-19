@@ -56,7 +56,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 * log_softmax [done]
 * view [done]
 * nll_loss [done]
-* in-place add/sub/mul/div []
+* in-place add/sub/mul/div [done]
 
 
 ### Autograd
@@ -76,7 +76,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 
 ### Memory Optimization
 * ref count []
-* in-place []
+* in-place[]
 * normal sharing []
 
 ### Other

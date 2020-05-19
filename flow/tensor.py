@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class Tensor:
     def __init__(self, data, require_grad=False):
         if not isinstance(data, np.ndarray):
@@ -29,7 +28,7 @@ class Tensor:
         if not isinstance(other, Tensor):
             other = Tensor(other)
         return F.add(self, other)
-    
+
     def __mul__(self, other):
         from . import function as F
         if not isinstance(other, Tensor):
@@ -51,6 +50,30 @@ class Tensor:
             other = Tensor(other)
         return F.true_div(self, other)
     
+    def __iadd__(self, other):
+        from . import function as F
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
+        return F.add(self, other, inplace=True)
+    
+    def __isub__(self, other):
+        from . import function as F
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
+        return F.sub(self, other, inplace=True)
+    
+    def __imul__(self, other):
+        from . import function as F
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
+        return F.mul(self, other, inplace=True)
+    
+    def __itruediv__(self, other):
+        from . import function as F
+        if not isinstance(other, Tensor):
+            other = Tensor(other)
+        return F.true_div(self, other, inplace=True)
+    
     def __floordiv__(self, other):
         if not isinstance(other, Tensor):
             other = Tensor(other)
@@ -60,6 +83,7 @@ class Tensor:
     def __pow__(self, other):
         if not isinstance(other, Tensor):
             other = Tensor(other)
+        # TODO should have gradient version
         new_tensor = Tensor(self.data ** other.data)
         return new_tensor
     
@@ -164,7 +188,9 @@ class Tensor:
     
     def backward(self, grad=None):
         from . import autograd
-        autograd.backward(self, grad)
+        with autograd.no_grad():
+            # should not build computation graph in backward method
+            autograd.backward(self, grad)
     
     def __getitem__(self, key):
         if isinstance(key, Tensor):
