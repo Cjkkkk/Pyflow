@@ -1,5 +1,5 @@
+import flow
 import flow.function as F
-from flow.tensor import Tensor
 from flow.module import Conv2d, Linear, Module
 from flow.optim import SGD
 from flow.data import MNIST, DataLoader

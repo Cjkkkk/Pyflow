@@ -20,10 +20,10 @@ class TwoFc(Module):
 model = TwoFc()
 optim = SGD(model.parameters(), lr = 0.01)
 for i in range(100):
-    input = Tensor(np.random.randn(1, 2))
+    input = flow.randn((1, 2))
     output = model(input)
-    target = 3 * input.data[0, 0] + 2 * input.data[0, 1]
-    loss = F.square_loss(output, Tensor(np.array([[target]])))
+    target = 3 * input[0, 0] + 2 * input[0, 1]
+    loss = F.square_loss(output, target)
     loss.backward()
     optim.step()
     optim.zero_grad()
@@ -36,8 +36,8 @@ with open("checkpoint.pth", "rb") as f:
 
 model = TwoFc()
 model.load_state_dict(state_dict)
-input = Tensor(np.random.randn(1, 2))
+input = flow.randn((1, 2))
 output = model(input)
-target = 3 * input.data[0, 0] + 2 * input.data[0, 1]
-loss = F.square_loss(output, Tensor(np.array([[target]])))
-print("loss", loss.data)
+target = 3 * input[0, 0] + 2 * input[0, 1]
+loss = F.square_loss(output, target)
+print("loss", loss)

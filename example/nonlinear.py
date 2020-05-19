@@ -1,7 +1,7 @@
+import flow
 from flow.module import Module, Linear
 from flow.optim import SGD
 from flow import function as F
-from flow.tensor import Tensor
 import numpy as np
 
 class Net(Module):
@@ -20,11 +20,11 @@ class Net(Module):
 model = Net()
 optim = SGD(model.parameters(), lr = 0.005)
 for i in range(100):
-    input = Tensor(np.random.randn(1, 2))
+    input = flow.randn((1, 2))
     output = model(input)
-    target = 3 * input.data[0, 0] * input.data[0, 0] + 2 * input.data[0, 1]
-    loss = F.square_loss(output, Tensor(np.array([[target]])))
+    target = 3 * input[0, 0] * input[0, 0] + 2 * input[0, 1]
+    loss = F.square_loss(output, target)
     loss.backward()
     optim.step()
     optim.zero_grad()
-    print("loss", loss.data)
+    print("loss", loss)

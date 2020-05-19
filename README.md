@@ -10,10 +10,11 @@ python setup.py develop
 ## example
 
 ```python
+import flow
+import flow.function as F
 from flow.module import Module, Linear
 from flow.optim import SGD
-from flow import function as F
-from flow.tensor import Tensor, randn
+
 
 class TwoFc(Module):
     def __init__(self):
@@ -23,14 +24,14 @@ class TwoFc(Module):
 
     def forward(self, a):
         x = self.fc1(a)
-        y = self.fc2(x)
-        return y
+        x = self.fc2(x)
+        return x
 
 # y = 3x_1 + 2x_2
 model = TwoFc()
 optim = SGD(model.parameters(), lr = 0.01)
 for i in range(100):
-    input = randn((1, 2))
+    input = flow.randn((1, 2))
     output = model(input)
     target = 3 * input[0, 0] + 2 * input[0, 1]
     loss = F.square_loss(output, target)
