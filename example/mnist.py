@@ -3,7 +3,6 @@ import flow.function as F
 from flow.module import Conv2d, Linear, Module
 from flow.optim import SGD
 from flow.data import MNIST, DataLoader
-from flow.autograd import no_grad
 from flow.transform import Normalize, Compose
 import numpy as np
 import pickle
@@ -41,7 +40,7 @@ def test(args, model, test_loader):
     model.eval()
     test_loss = 0
     correct = 0
-    with no_grad():
+    with flow.no_grad():
         for data, target in test_loader:
             output = model(data)
             # sum up batch loss
