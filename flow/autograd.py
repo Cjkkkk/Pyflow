@@ -40,13 +40,12 @@ def register_backward(func, output):
         output.require_grad = False
 
 class Function:
-    def __init__(self, *inputs):
+    def __init__(self, *args, **kwargs):
         self.ctx = Context()
-        self.inputs = inputs
-        # update ref_count for memory optimization
+        self.inputs = [ v for v in [*args, *kwargs.values()] if isinstance(v, Tensor) ]
         for inp in self.inputs:
-            if isinstance(inp, Tensor):
-                inp.ref_count += 1
+            # update ref_count for memory optimization
+            inp.ref_count += 1
     
     @classmethod
     def apply(cls, *args, **kwargs):
