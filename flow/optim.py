@@ -18,6 +18,7 @@ class SGD(optim):
         self.params = params
         self.lr = lr
 
+    @no_grad()
     def step(self):
         for param in self.params:
             param -= param.grad * self.lr
