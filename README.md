@@ -64,6 +64,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 * gradient_check_tool [done]
 * no_grad [done]
 * grad as tensor [done]
+* inplace gradient calculation []
 
 ### Module
 * module load/store [done]
