@@ -42,7 +42,7 @@ for i in range(100):
 ```
 ## test
 ```bash
-python test/test_gradient.py
+python -m unittest
 ```
 
 PS: `pytorch` is required to check the correctness of implementation.
