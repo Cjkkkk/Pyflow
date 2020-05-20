@@ -95,7 +95,7 @@ class ReLU(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a = ctx.saved_tensors()[0]
+        a, = ctx.saved_tensors()
         a_grad = grad_output.copy()
         a_grad[a < 0] = 0
         return a_grad
@@ -109,7 +109,7 @@ class Sum(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a = ctx.saved_tensors()[0]
+        a, = ctx.saved_tensors()
         a_grad = grad_output * ones(a.shape)
         return a_grad
 
@@ -295,7 +295,7 @@ class View(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        original_shape = ctx.saved_tensors()[0]
+        original_shape, = ctx.saved_tensors()
         grad = grad_output.copy().reshape(original_shape)
         return grad
 
