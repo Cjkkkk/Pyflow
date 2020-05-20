@@ -1,4 +1,5 @@
 from .tensor import Tensor
+from .autograd import no_grad
 
 class optim:
     def __init__(self):
@@ -19,4 +20,4 @@ class SGD(optim):
 
     def step(self):
         for param in self.params:
-            param.data -= param.grad.data * self.lr
+            param -= param.grad * self.lr

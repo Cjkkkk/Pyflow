@@ -82,5 +82,6 @@ def backward(tensor, grad):
             if not isinstance(input_grads, tuple):
                 input_grads = (input_grads,)
             for idx, input in enumerate(tensor.grad_fn.inputs):
-                if isinstance(input, Tensor):
+                # avoid overflow in inplace operation
+                if isinstance(input, Tensor) and input is not tensor:
                     backward(input, input_grads[idx])
