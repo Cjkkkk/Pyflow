@@ -32,7 +32,7 @@ class Mul(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a, b = ctx.saved_tensors()
+        a, b = ctx.saved_tensors
         b_grad = grad_output * a.data
         a_grad = grad_output * b.data
         return a_grad, b_grad
@@ -66,7 +66,7 @@ class Truediv(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a, b = ctx.saved_tensors()
+        a, b = ctx.saved_tensors
         b_grad = grad_output * (-a.data) / (b.data ** 2)
         a_grad = grad_output / b.data
         return a_grad, b_grad
@@ -80,7 +80,7 @@ class MM(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a, b = ctx.saved_tensors()
+        a, b = ctx.saved_tensors
         a_grad = np.matmul(grad_output.data, np.transpose(b.data))
         b_grad = np.matmul(np.transpose(a.data), grad_output.data)
         return Tensor(a_grad), Tensor(b_grad)
@@ -95,7 +95,7 @@ class ReLU(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a, = ctx.saved_tensors()
+        a, = ctx.saved_tensors
         a_grad = grad_output.copy()
         a_grad[a < 0] = 0
         return a_grad
@@ -109,7 +109,7 @@ class Sum(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a, = ctx.saved_tensors()
+        a, = ctx.saved_tensors
         a_grad = grad_output * ones(a.shape)
         return a_grad
 
@@ -123,7 +123,7 @@ class Min(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a, axis, idx = ctx.saved_tensors()
+        a, axis, idx = ctx.saved_tensors
         grad = np.zeros(a.shape)
         if axis is None:
             grad.itemset(idx, grad_output.item())
@@ -143,7 +143,7 @@ class Max(autograd.Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        a, axis, idx = ctx.saved_tensors()
+        a, axis, idx = ctx.saved_tensors
         grad = np.zeros(a.shape)
         if axis is None:
             grad.itemset(idx, grad_output.item())
@@ -162,7 +162,7 @@ class SquareLoss(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        a, b = ctx.saved_tensors()
+        a, b = ctx.saved_tensors
         a_grad = grad_output * 2.0 * (a - b)
         b_grad = grad_output * -2.0 * (a - b)
         return a_grad, b_grad
@@ -199,7 +199,7 @@ class MaxPool2d(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        tensor, kernel_size, stride, padding = ctx.saved_tensors()
+        tensor, kernel_size, stride, padding = ctx.saved_tensors
         batchsize, channel, height, width = tensor.shape
         batchsize, channel, output_height, output_width = grad_output.shape
         
@@ -257,7 +257,7 @@ class Conv2d(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        col_image, col_weight, bias, input_shape, weight_shape, stride, padding = ctx.saved_tensors()
+        col_image, col_weight, bias, input_shape, weight_shape, stride, padding = ctx.saved_tensors
         batchsize, output_channel, output_height, output_width = grad_output.shape
         batchsize, input_channel, height, width = input_shape
         output_channel, input_channel, kernel_height, kernel_width = weight_shape
@@ -295,7 +295,7 @@ class View(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        original_shape, = ctx.saved_tensors()
+        original_shape, = ctx.saved_tensors
         grad = grad_output.copy().reshape(original_shape)
         return grad
 
@@ -314,7 +314,7 @@ class LogSoftmax(autograd.Function):
     
     @staticmethod
     def backward(ctx, grad_output):
-        data_shift_exp, exp_sum = ctx.saved_tensors()
+        data_shift_exp, exp_sum = ctx.saved_tensors
         e = - data_shift_exp / exp_sum
         N, C = e.shape
         grad = zeros((N, C))
@@ -342,7 +342,7 @@ class NllLoss(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         # grad_output is size (N, 1), output is size (N, C) 
-        target, input, reduction = ctx.saved_tensors()
+        target, input, reduction = ctx.saved_tensors
         output = zeros(input.shape)
         batch_size = output.shape[0]
         for idx in range(batch_size):

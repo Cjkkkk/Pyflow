@@ -12,7 +12,8 @@ class Tensor:
         self.is_leaf = True
         self.require_grad = require_grad
         self.ref_count = 0
-    
+        self.version = 0
+
     @property
     def require_grad(self):
         return self._require_grad
@@ -190,7 +191,7 @@ class Tensor:
         from . import autograd
         with autograd.no_grad():
             # should not build computation graph in backward method
-            autograd.backward(self, grad)
+            autograd.backward(self, self.grad_fn, grad)
     
     def __getitem__(self, key):
         if isinstance(key, Tensor):

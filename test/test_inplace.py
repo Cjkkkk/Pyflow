@@ -50,5 +50,13 @@ class TestInPlace(unittest.TestCase):
         a = a / flow.Tensor(5)
         assert not np.allclose(a.data, b.data)
 
+    def test_inplace_gradient(self):
+        a = flow.Tensor(3.1, require_grad=True)
+        b = a + flow.Tensor(1.1)
+        b += flow.Tensor(5)
+        b *= flow.Tensor(5)
+        b.backward()
+        assert np.allclose(b.grad.data, np.array(5))
+
 if __name__ == '__main__':
     unittest.main()
