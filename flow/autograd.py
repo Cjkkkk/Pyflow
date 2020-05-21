@@ -56,11 +56,11 @@ def register_backward(func, output):
             require_grad = i.require_grad or require_grad
             output.version += i is output
         
-        func.ctx.record_version()
         if output.require_grad and output.is_leaf and output.version != 0:
             raise RuntimeError("leaf tensor with require_grad=True can not be used in inplace operation.")
         
         if require_grad:
+            func.ctx.record_version()
             output.grad_fn = func
             output.is_leaf = False
             output.require_grad = require_grad
