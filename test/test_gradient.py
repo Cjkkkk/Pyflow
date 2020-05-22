@@ -163,6 +163,15 @@ class TestGradientPytorch(unittest.TestCase):
 
     def test_optim_SGD(self):
         for i in range(10):
+            a = flow.Tensor(1.1, require_grad=True)
+            b = flow.Tensor(1.1)
+            c = b + a
+            flow_sgd = flow_optim.SGD([a], lr=0.01)
+            c.backward()
+            flow_sgd.step()
+            flow_sgd.zero_grad()
+        
+        for i in range(10):
             torch_input = torch.rand((2, 2), requires_grad=True)
             flow_input = flow.Tensor(convert_to_numpy(torch_input).copy(), require_grad=True)
 
