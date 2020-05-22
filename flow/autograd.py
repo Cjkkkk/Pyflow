@@ -120,7 +120,6 @@ class Function(metaclass=FunctionMeta):
 def backward(tensor, grad_fn, grad=None):
     # TODO why can not add no_grad decorator to backward?
     if tensor.require_grad:
-        # print(tensor.shape, grad_fn, grad.shape if grad is not None else ())
         if grad is None:
             grad = ones(tensor.shape)
         if tensor.grad is None or tensor.version != 0:
