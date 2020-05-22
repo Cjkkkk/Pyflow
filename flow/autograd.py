@@ -88,7 +88,7 @@ class Function(metaclass=FunctionMeta):
 
     def __init__(self, *args, **kwargs):
         self.inputs = None
-        self.next_functions = None
+        self.grad_fn.next_functions = None
         
         if no_grad._is_grad_enabled:
             self.inputs = [ v for v in [*args, *kwargs.values()] if isinstance(v, Tensor) ]
