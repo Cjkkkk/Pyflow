@@ -92,7 +92,7 @@ class Function(metaclass=FunctionMeta):
         
         if no_grad._is_grad_enabled:
             self.inputs = [ v for v in [*args, *kwargs.values()] if isinstance(v, Tensor) ]
-            self.next_functions = [inp.grad_fn for inp in self.inputs]
+            self.grad_fn.next_functions = [inp.grad_fn for inp in self.inputs]
             for inp in self.inputs:
                 # update ref_count for memory optimization
                 inp.ref_count += 1
@@ -130,5 +130,5 @@ def backward(tensor, grad_fn, grad=None):
         if not tensor.is_leaf:
             input_grads = grad_fn(tensor.grad)
             input_grads = (input_grads,) if not isinstance(input_grads, tuple) else input_grads
-            for idx, next_fn in enumerate(grad_fn.fn.next_functions):
+            for idx, next_fn in enumerate(grad_fn.next_functions):
                 backward(grad_fn.fn.inputs[idx], next_fn, input_grads[idx])
