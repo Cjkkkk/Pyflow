@@ -11,7 +11,8 @@ class Tensor:
         # if required_grad is True and Tensor is created by user, is_leaf is True, False otherwise
         self.is_leaf = True
         self.require_grad = require_grad
-        self.ref_count = 0
+        self.forward_ref_count = 0
+        self.backward_ref_count = 0
         self.version = 0
 
     @property
@@ -191,6 +192,7 @@ class Tensor:
         from . import autograd
         with autograd.no_grad():
             # should not build computation graph in backward method
+            self.forward_ref_count += 1
             autograd.backward(self, self.grad_fn, grad)
     
     def __getitem__(self, key):

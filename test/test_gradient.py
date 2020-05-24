@@ -189,5 +189,22 @@ class TestGradientPytorch(unittest.TestCase):
             
             assert np.allclose(convert_to_numpy(torch_output), flow_output.data, atol=1e-6)
 
+    def test_multi_function_on_one_input(self):
+        torch_a = torch.tensor(1.1, requires_grad=True)
+        torch_b = torch_a + 1
+        torch_c = torch_b * 2
+        torch_d = torch_b * 3
+        torch_e = torch_c * torch_d
+        torch_b.retain_grad()
+        torch_e.backward()
+
+        flow_a = flow.Tensor(1.1, require_grad=True)
+        flow_b = flow_a + 1
+        flow_c = flow_b * 2
+        flow_d = flow_b * 3
+        flow_e = flow_c * flow_d
+        flow_e.backward()
+        assert np.allclose(convert_to_numpy(torch_a.grad), flow_a.grad.data, atol=1e-8)
+
 if __name__ == '__main__':
     unittest.main()

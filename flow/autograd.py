@@ -26,16 +26,19 @@ class no_grad:
 
  
 class Context:
+    def __init__(self):
+        self.store = []
+    
     def record_version(self):
-        if hasattr(self, "store"):
-            self.record_version = [v.version for v in self.store if isinstance(v, Tensor)]
+        self.record_version = [v.version for v in self.store if isinstance(v, Tensor)]
     
     def save_for_backward(self, *values):
         self.store = values
         # update ref_count for memory optimization
         for v in self.store:
             if isinstance(v, Tensor):
-                v.ref_count += 1
+                v.backward_ref_count += 1
+    
     @property
     def saved_tensors(self):
         current_version = [v.version for v in self.store if isinstance(v, Tensor)]
@@ -95,7 +98,7 @@ class Function(metaclass=FunctionMeta):
             self.grad_fn.next_functions = [inp.grad_fn for inp in self.inputs]
             for inp in self.inputs:
                 # update ref_count for memory optimization
-                inp.ref_count += 1
+                inp.forward_ref_count += 1
     
     def __call__(self, *args, **kwargs):
         return self.forward(self.grad_fn, *args, **kwargs)
@@ -119,16 +122,20 @@ class Function(metaclass=FunctionMeta):
 
 def backward(tensor, grad_fn, grad=None):
     # TODO why can not add no_grad decorator to backward?
+    tensor.forward_ref_count -= 1
     if tensor.require_grad:
         if grad is None:
             grad = ones(tensor.shape)
-        if tensor.grad is None or tensor.version != 0:
+        if tensor.grad is None:
             tensor.grad = grad
         else:
             # TODO fix this bug, iadd is not implemented
             tensor.grad += grad
-        if not tensor.is_leaf:
+        if not tensor.is_leaf and tensor.forward_ref_count == 0:
             input_grads = grad_fn(tensor.grad)
             input_grads = (input_grads,) if not isinstance(input_grads, tuple) else input_grads
             for idx, next_fn in enumerate(grad_fn.next_functions):
+                for tensor in grad_fn.saved_tensors:
+                    if grad_fn.fn.inputs[idx] is tensor:
+                        grad_fn.fn.inputs[idx].backward_ref_count -= 1
                 backward(grad_fn.fn.inputs[idx], next_fn, input_grads[idx])
