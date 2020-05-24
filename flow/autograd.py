@@ -120,9 +120,14 @@ class Function(metaclass=FunctionMeta):
     def backward(ctx, grad_output):
         raise NotImplementedError("should implement backward method")
 
+def update_ref_count(tensor, ctx):
+    tensor.forward_ref_count -= 1
+    for t in ctx.saved_tensors:
+        if tensor is t:
+            tensor.backward_ref_count -= 1
+
 def backward(tensor, grad_fn, grad=None):
     # TODO why can not add no_grad decorator to backward?
-    tensor.forward_ref_count -= 1
     if tensor.require_grad:
         if grad is None:
             grad = ones(tensor.shape)
@@ -135,7 +140,5 @@ def backward(tensor, grad_fn, grad=None):
             input_grads = grad_fn(tensor.grad)
             input_grads = (input_grads,) if not isinstance(input_grads, tuple) else input_grads
             for idx, next_fn in enumerate(grad_fn.next_functions):
-                for tensor in grad_fn.saved_tensors:
-                    if grad_fn.fn.inputs[idx] is tensor:
-                        grad_fn.fn.inputs[idx].backward_ref_count -= 1
+                update_ref_count(grad_fn.fn.inputs[idx], grad_fn)
                 backward(grad_fn.fn.inputs[idx], next_fn, input_grads[idx])

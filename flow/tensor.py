@@ -192,7 +192,6 @@ class Tensor:
         from . import autograd
         with autograd.no_grad():
             # should not build computation graph in backward method
-            self.forward_ref_count += 1
             autograd.backward(self, self.grad_fn, grad)
     
     def __getitem__(self, key):
