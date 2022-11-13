@@ -46,7 +46,7 @@ class TestGradientAuto(unittest.TestCase):
         gradient_check(F.relu, flow.randn((5,4), require_grad=True))
 
     def test_mm_auto(self):
-        gradient_check(F.mm, flow.randn((5,4), require_grad=True), flow.randn((4,5), require_grad=True))
+        gradient_check(F.mm, flow.randn((5,4), require_grad=True), flow.randn((4,5), require_grad=True), flow.randn((1,5), require_grad=True))
     
     def test_view_auto(self):
         gradient_check(F.view, flow.randn((4,5), require_grad=True), (20, 1))

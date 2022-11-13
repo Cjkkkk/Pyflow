@@ -92,14 +92,18 @@ class Identity(Module):
         return self.data
 
 class Linear(Module):
-    def __init__(self, input_channel, output_channel):
+    def __init__(self, input_channel, output_channel, bias=True):
         super().__init__()
         self.input_channel = input_channel
         self.outputchannel = output_channel
         self.weight = Tensor(np.random.randn(input_channel, output_channel), require_grad=True)
-
+        if bias:
+            self.bias = Tensor(np.random.randn(output_channel), require_grad=True)
+        else:
+            self.bias = None
+            
     def forward(self, x):
-        y = F.mm(x, self.weight)
+        y = F.mm(x, self.weight, self.bias)
         return y
 
 class Conv2d(Module):

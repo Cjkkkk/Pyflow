@@ -73,17 +73,24 @@ class Truediv(autograd.Function):
 
 class MM(autograd.Function):
     @staticmethod
-    def forward(ctx, a, b):
-        ctx.save_for_backward(a, b)
-        new_tensor = Tensor(np.matmul(a.data, b.data))
+    def forward(ctx, a, b, bias):
+        ctx.save_for_backward(a, b, bias)
+        if bias is None:
+            new_tensor = Tensor(np.matmul(a.data, b.data))
+        else:
+            new_tensor = Tensor(np.matmul(a.data, b.data) + bias.data)
         return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):
-        a, b = ctx.saved_tensors
+        a, b, bias = ctx.saved_tensors
         a_grad = np.matmul(grad_output.data, np.transpose(b.data))
         b_grad = np.matmul(np.transpose(a.data), grad_output.data)
-        return Tensor(a_grad), Tensor(b_grad)
+        if bias is None:
+            bias_grad = None
+        else:
+            bias_grad = np.sum(grad_output.data, axis=0)
+        return Tensor(a_grad), Tensor(b_grad), bias_grad
 
 class ReLU(autograd.Function):
     @staticmethod
@@ -271,8 +278,8 @@ class Conv2d(autograd.Function):
         input_gradient = zeros(input_shape)
     
         for i in range(batchsize):
-            col_image_gradient = mm(transpose(conv_out_gradient[i]), col_weight)
-            col_weight_gradient += mm(conv_out_gradient[i], col_image[i])
+            col_image_gradient = mm(transpose(conv_out_gradient[i]), col_weight, None)
+            col_weight_gradient += mm(conv_out_gradient[i], col_image[i], None)
             
             j = 0
             for h in range(0, height - kernel_height + 1, stride[0]):
@@ -321,7 +328,7 @@ class LogSoftmax(autograd.Function):
         for i in range(N):
             jac = np.tile(e[i], (C, 1))
             jac[np.diag_indices_from(jac)] += 1
-            grad[i] = mm(Tensor(np.transpose(jac)), grad_output[i])
+            grad[i] = mm(Tensor(np.transpose(jac)), grad_output[i], None)
         return grad
 
 class NllLoss(autograd.Function):
