@@ -311,10 +311,10 @@ class LogSoftmax(autograd.Function):
     def forward(ctx, tensor, dim):
         # tensor size is (N, C)
         data = tensor.data
-        data_shift = data - np.max(data)
+        data_shift = data - np.amax(data, axis=dim, keepdims=True)
         data_shift_exp = np.exp(data_shift)
         exp_sum = np.sum(data_shift_exp, axis=dim, keepdims=True)
-        exp_sum[exp_sum == 0] = 1e-10
+        # exp_sum[exp_sum == 0] = 1e-10
         res = data_shift - np.log(exp_sum)
         ctx.save_for_backward(data_shift_exp, exp_sum)
         return Tensor(res)

@@ -1,5 +1,3 @@
-import numpy as np
-import traceback
 import functools
 from .tensor import Tensor, ones
 

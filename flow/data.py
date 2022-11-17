@@ -33,7 +33,7 @@ class DataLoader:
             shuffle_idx = self.shuffle_idx[i:] if i + self.batch_size > len(self.dataset) else self.shuffle_idx[i: i + self.batch_size]
             data_batch = [self.dataset[idx] for idx in shuffle_idx]
             if isinstance(data_batch[0], tuple):
-                return [ stack(z) for z in zip(*data_batch)]
+                return [stack(z) for z in zip(*data_batch)]
             else:
                 return stack(data_batch)
         else:

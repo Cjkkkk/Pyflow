@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Tensor:
     def __init__(self, data, require_grad=False):
         if not isinstance(data, np.ndarray):
@@ -161,7 +162,7 @@ class Tensor:
         return Tensor(self.data.astype(new_type))
     
     def item(self):
-        if self.size != 1:
+        if self.size() != 1:
             raise ValueError("tensor size is larger than 1, ambiguous value.")
         return self.data.item(0)
     
@@ -172,9 +173,12 @@ class Tensor:
     def shape(self):
         return self.data.shape
     
-    @property
+    # Note: numpy size returns total amount but pytorch size() is alias of shape
     def size(self):
         return self.data.size
+    
+    def dim(self):
+        return len(self.shape)
     
     @property
     def dtype(self):
@@ -212,12 +216,12 @@ class Tensor:
             self.data[key] = value
 
 def transpose(tensor):
+    # TODO: fix shape here
     tensor.data = np.transpose(tensor.data)
     return tensor
 
-def log(tensor, *args, **kwargs):
-    # TODO calculate gradient
-    return Tensor(np.log(tensor.data, *args, **kwargs))
+def empty(shape, require_grad=False):
+    return Tensor(np.empty(shape), require_grad)
 
 def ones(shape, require_grad=False):
     return Tensor(np.ones(shape), require_grad)
@@ -227,6 +231,9 @@ def zeros(shape, require_grad=False):
 
 def randn(shape, require_grad=False):
     return Tensor(np.random.randn(*shape), require_grad)
+
+def rand(shape, require_grad=False):
+    return Tensor(np.random.rand(*shape), require_grad)
 
 def stack(tensors):
     return Tensor(np.stack([t.data for t in tensors]))

@@ -4,7 +4,6 @@ from flow.module import Conv2d, Linear, Module
 from flow.optim import SGD
 from flow.data import MNIST, DataLoader
 from flow.transform import Normalize, Compose
-import numpy as np
 import pickle
 import argparse
 
@@ -64,7 +63,7 @@ def main():
                         help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=40, metavar='N',
                         help='number of epochs to train (default: 14)')
-    parser.add_argument('--lr', type=float, default=5e-4, metavar='LR',
+    parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1.0)')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
@@ -75,13 +74,17 @@ def main():
                         help='For Saving the current Model')
     args = parser.parse_args()
 
+    transform = Compose([
+        Normalize((0.1307,), (0.3081,))
+        ])
+
     train_loader = DataLoader(
         MNIST('./data', train=True, download=True),
-            batch_size=args.batch_size, shuffle=True)
+            batch_size=args.batch_size, shuffle=True, transform=transform)
     
     test_loader = DataLoader(
         MNIST('./data', train=False, download=False),
-            batch_size=args.test_batch_size, shuffle=True)
+            batch_size=args.test_batch_size, shuffle=True, transform=transform)
 
     model = Net()
     optimizer = SGD(model.parameters(), lr=args.lr)
@@ -89,8 +92,6 @@ def main():
     for epoch in range(1, args.epochs + 1):
         train(args, model, train_loader, optimizer, epoch)
         test(args, model, test_loader)
-        if epoch % 10 == 0:
-            optimizer.lr *= 0.5
     if args.save_model:
         with open("mnist_cnn.pt", "wb") as f:
             pickle.dump(model.state_dict(), f)

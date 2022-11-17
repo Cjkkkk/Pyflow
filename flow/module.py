@@ -1,4 +1,5 @@
 from .tensor import Tensor
+from .init import kaiming_uniform
 from . import function as F
 from .utils import _make_pair
 import numpy as np
@@ -96,9 +97,11 @@ class Linear(Module):
         super().__init__()
         self.input_channel = input_channel
         self.outputchannel = output_channel
-        self.weight = Tensor(np.random.randn(input_channel, output_channel), require_grad=True)
+        # self.weight = Tensor(np.random.randn(input_channel, output_channel), require_grad=True)
+        self.weight = Tensor(kaiming_uniform((input_channel, output_channel)), require_grad=True)
         if bias:
-            self.bias = Tensor(np.random.randn(output_channel), require_grad=True)
+            # self.bias = Tensor(np.random.randn(output_channel), require_grad=True)
+            self.bias = Tensor(kaiming_uniform((1, output_channel)), require_grad=True)
         else:
             self.bias = None
             

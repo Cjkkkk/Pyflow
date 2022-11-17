@@ -1,5 +1,7 @@
 from .tensor import Tensor
 import functools
+
+
 def Normalize(std, mean):
     def f(tensor):
         return (tensor - mean) / std
