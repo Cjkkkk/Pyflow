@@ -306,6 +306,7 @@ class View(autograd.Function):
         grad = grad_output.copy().reshape(original_shape)
         return grad
 
+
 class LogSoftmax(autograd.Function):
     @staticmethod
     def forward(ctx, tensor, dim):
@@ -362,6 +363,33 @@ class NllLoss(autograd.Function):
             raise RuntimeError("unsupported reducetion type.")
         return output, None, None
 
+
+class Dropout(autograd.Function):
+    @staticmethod
+    def forward(ctx, input, training, p, inplace):
+        mask = None
+        if inplace:
+            output = input
+        else:
+            output = input.copy()
+        
+        if training:
+            mask = np.random.binomial(1, p, size=input.shape)
+            output[mask == 1] = 0
+            output[mask == 0] /= (1 - p)
+        ctx.save_for_backward(mask, training, p)
+        return Tensor(output)
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        # grad_output is size (N, 1), output is size (N, C) 
+        mask, training, p = ctx.saved_tensors
+        if training:
+            grad_output[mask == 1] = 0
+            grad_output[mask == 1] /= (1 - p) 
+        return grad_output, None, None
+    
+    
 add = Add.apply
 mul = Mul.apply
 sub = Sub.apply
@@ -378,3 +406,4 @@ max_pool2d = MaxPool2d.apply
 log_softmax = LogSoftmax.apply
 view = View.apply
 nll_loss = NllLoss.apply
+dropout = Dropout.apply

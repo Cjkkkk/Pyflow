@@ -91,12 +91,11 @@ class Identity(Module):
     def forward(self):
         return self.data
 
-
 class Linear(Module):
     def __init__(self, input_channel, output_channel, bias=True):
         super().__init__()
         self.input_channel = input_channel
-        self.outputchannel = output_channel
+        self.output_channel = output_channel
         self.weight = Tensor(kaiming_uniform((input_channel, output_channel)), require_grad=True)
         if bias:
             # self.bias = Tensor(np.random.randn(output_channel), require_grad=True)
@@ -107,6 +106,7 @@ class Linear(Module):
     def forward(self, x):
         y = F.mm(x, self.weight, self.bias)
         return y
+
 
 class Conv2d(Module):
     def __init__(self, input_channel, output_channel, kernel_size, stride=1, padding=0, bias=True):
@@ -132,3 +132,14 @@ class Conv2d(Module):
         
     def forward(self, x):
         return F.conv2d(x, self.weight, self.bias, self.stride, self.padding)
+    
+
+class Dropout(Module):
+    def __init__(self, p=0.5, inplace=False):
+        super().__init__()
+        self.p = p
+        self.inplace = inplace
+            
+    def forward(self, x):
+        y = F.dropout(x, self._training, self.p, self.inplace)
+        return y
