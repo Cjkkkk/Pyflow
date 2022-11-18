@@ -3,7 +3,6 @@ from .init import kaiming_uniform
 from . import function as F
 from .utils import _make_pair
 import numpy as np
-import math
 
 
 class Module:
@@ -92,16 +91,16 @@ class Identity(Module):
     def forward(self):
         return self.data
 
+
 class Linear(Module):
     def __init__(self, input_channel, output_channel, bias=True):
         super().__init__()
         self.input_channel = input_channel
         self.outputchannel = output_channel
-        # self.weight = Tensor(np.random.randn(input_channel, output_channel), require_grad=True)
         self.weight = Tensor(kaiming_uniform((input_channel, output_channel)), require_grad=True)
         if bias:
             # self.bias = Tensor(np.random.randn(output_channel), require_grad=True)
-            self.bias = Tensor(kaiming_uniform((1, output_channel)), require_grad=True)
+            self.bias = Tensor(kaiming_uniform((output_channel,)), require_grad=True)
         else:
             self.bias = None
             
@@ -118,13 +117,18 @@ class Conv2d(Module):
         self.stride = _make_pair(stride)
         self.padding = _make_pair(padding)
 
-        weight_scale = math.sqrt(self.kernel_size[0] * self.kernel_size[1] * self.input_channel / 2)
+        # weight_scale = math.sqrt(self.kernel_size[0] * self.kernel_size[1] * self.input_channel / 2)
+        # if bias:
+        #     self.bias = Tensor(np.random.standard_normal(self.output_channel) / weight_scale, require_grad=True)
+        # else:
+        #     self.bias = None
+        # self.weight = Tensor(np.random.standard_normal(
+        #     (self.output_channel, self.input_channel, self.kernel_size[0], self.kernel_size[1])) / weight_scale, require_grad=True)
         if bias:
-            self.bias = Tensor(np.random.standard_normal(self.output_channel) / weight_scale, require_grad=True)
+            self.bias = Tensor(kaiming_uniform((output_channel,)), require_grad=True)
         else:
             self.bias = None
-        self.weight = Tensor(np.random.standard_normal(
-            (self.output_channel, self.input_channel, self.kernel_size[0], self.kernel_size[1])) / weight_scale, require_grad=True)
-
+        self.weight = Tensor(kaiming_uniform((self.output_channel, self.input_channel, self.kernel_size[0], self.kernel_size[1])), require_grad=True)
+        
     def forward(self, x):
         return F.conv2d(x, self.weight, self.bias, self.stride, self.padding)

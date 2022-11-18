@@ -2,13 +2,23 @@ import math
 import numpy as np
 
 def calculate_fan_in_and_fan_out(shape):
-    if len(shape) < 2:
-        raise RuntimeError("Need at least 2 dim to calculate fan in and fan out")
-    fan_in, fan_out = shape[0], shape[1]
-    receptive_field_size = 1
-    for s in shape[2:]:
-        receptive_field_size *= s
-    return fan_in * receptive_field_size, fan_out * receptive_field_size
+    if len(shape) < 1:
+        raise RuntimeError("Need at least 1 dim to calculate fan in and fan out")
+    elif len(shape) == 1:
+        # bias
+        fan_in, fan_out = shape[0], 1
+    elif len(shape) == 2:
+        # linear
+        fan_in, fan_out = shape[0], shape[1]
+    else:
+        # conv
+        fan_in, fan_out = shape[1], shape[0]
+        receptive_field_size = 1
+        for s in shape[2:]:
+            receptive_field_size *= s
+        fan_in *= receptive_field_size
+        fan_out *= receptive_field_size
+    return fan_in, fan_out
 
 
 def rand_(shape, low, high):

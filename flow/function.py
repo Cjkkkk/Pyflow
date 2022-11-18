@@ -89,7 +89,7 @@ class MM(autograd.Function):
         if bias is None:
             bias_grad = None
         else:
-            bias_grad = np.sum(grad_output.data, axis=0)
+            bias_grad = Tensor(np.sum(grad_output.data, axis=0))
         return Tensor(a_grad), Tensor(b_grad), bias_grad
 
 class ReLU(autograd.Function):

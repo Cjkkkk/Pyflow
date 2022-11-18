@@ -1,7 +1,7 @@
 import flow
 import flow.function as F
 from flow.module import Conv2d, Linear, Module
-from flow.optim import SGD
+from flow.optim import SGD, Adam
 from flow.data import MNIST, DataLoader
 from flow.transform import Normalize, Compose
 import pickle
@@ -57,7 +57,7 @@ def test(args, model, test_loader):
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='PyFlow MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+    parser.add_argument('--batch-size', type=int, default=50, metavar='N',
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
@@ -87,7 +87,7 @@ def main():
             batch_size=args.test_batch_size, shuffle=True, transform=transform)
 
     model = Net()
-    optimizer = SGD(model.parameters(), lr=args.lr)
+    optimizer = Adam(model.parameters(), lr=args.lr)
 
     for epoch in range(1, args.epochs + 1):
         train(args, model, train_loader, optimizer, epoch)

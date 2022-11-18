@@ -1,5 +1,6 @@
 from __future__ import print_function
 import argparse
+from statistics import mode
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -115,10 +116,8 @@ def main():
                        transform=transform)
     train_loader = torch.utils.data.DataLoader(dataset1,**train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
-
     model = Net().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    
+    optimizer = optim.SGD(model.parameters(), lr=args.lr)
     # scheduler = StepLR(optimizer, step_size=50, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, optimizer, epoch)
