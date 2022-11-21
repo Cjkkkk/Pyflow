@@ -48,8 +48,8 @@ class TestGradientAuto(unittest.TestCase):
     def test_mm_auto(self):
         gradient_check(F.mm, flow.randn((5,4), require_grad=True), flow.randn((4,5), require_grad=True), flow.randn((1,5), require_grad=True))
     
-    def test_view_auto(self):
-        gradient_check(F.view, flow.randn((4,5), require_grad=True), (20, 1))
+    # def test_view_auto(self):
+    #     gradient_check(F.view, flow.randn((4,5), require_grad=True), (20, 1))
 
 class TestGradientPytorch(unittest.TestCase):
     # check using pytorch
@@ -67,13 +67,13 @@ class TestGradientPytorch(unittest.TestCase):
         assert np.allclose(convert_to_numpy(torch_input.grad), flow_input.grad.data, atol=1e-6)
 
     def test_conv2d(self):
-        torch_conv2d = torch.nn.Conv2d(3, 2, 2, bias=False)
+        torch_conv2d = torch.nn.Conv2d(3, 2, 2, padding=0, bias=False)
         torch_input = torch.rand((1, 3, 3, 3), requires_grad=True)
         torch_output = torch_conv2d(torch_input)
         torch_gradient, flow_gradient = generate_gradient((torch_output.shape))
         torch_output.backward(torch_gradient)
 
-        flow_conv2d = Conv2d(3, 2, 2, bias=False)
+        flow_conv2d = Conv2d(3, 2, 2, padding=0, bias=False)
         flow_input = flow.Tensor(convert_to_numpy(torch_input), require_grad=True)
         flow_conv2d.weight = flow.Tensor(convert_to_numpy(torch_conv2d.weight), require_grad=True)
         flow_output = flow_conv2d(flow_input)

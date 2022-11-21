@@ -176,7 +176,9 @@ class SquareLoss(autograd.Function):
 
 class MaxPool2d(autograd.Function):
     @staticmethod
-    def forward(ctx, tensor, kernel_size, stride=1, padding=0):
+    def forward(ctx, tensor, kernel_size, stride=None, padding=0):
+        if stride is None:
+            stride = kernel_size
         kernel_size = _make_pair(kernel_size)
         stride = _make_pair(stride)
         padding = _make_pair(padding)
@@ -220,6 +222,7 @@ class MaxPool2d(autograd.Function):
         
         return grad[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]], None, None, None
 
+
 def im2col(image, kernel_height, kernel_width, stride):
     # image is a 4d tensor([batchsize, channel, height, width])
     image_col = []
@@ -229,6 +232,7 @@ def im2col(image, kernel_height, kernel_width, stride):
             image_col.append(col)
     image_col = np.array(image_col)
     return image_col
+
 
 class Conv2d(autograd.Function):
     @staticmethod
@@ -246,11 +250,11 @@ class Conv2d(autograd.Function):
             ))
         col_image = []
         for i in range(batchsize):
-            img_i = input[i][np.newaxis, :]
+            img_i = input[i][np.newaxis, :] # make it a 4D array
             col_image_i = im2col(img_i, kernel_height, kernel_width, stride)
             col_image.append(col_image_i)
             if bias is not None:
-                conv_out[i] = np.reshape(np.dot(col_weight, np.transpose(col_image_i)) + bias.data, conv_out[0].shape)
+                conv_out[i] = np.reshape(np.dot(col_weight, np.transpose(col_image_i)) + bias.data.reshape((-1,1)), conv_out[0].shape)
             else:
                 conv_out[i] = np.reshape(np.dot(col_weight, np.transpose(col_image_i)), conv_out[0].shape)
         col_image = np.array(col_image)
@@ -274,7 +278,11 @@ class Conv2d(autograd.Function):
         conv_out_gradient = grad_output.reshape(batchsize, output_channel, -1)
         
         # init gradient for input tensor
-        bias_gradient = ones(output_channel) if bias is None else None
+        if bias is not None:
+            bias_gradient = ones(output_channel) 
+        else:
+            bias_gradient = None
+        
         input_gradient = zeros(input_shape)
     
         for i in range(batchsize):
@@ -292,18 +300,84 @@ class Conv2d(autograd.Function):
         input_gradient = input_gradient[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]]
         return input_gradient, weight_gradient, bias_gradient, None, None
 
+# class Conv2d(autograd.Function):
+#     @staticmethod
+#     def forward(ctx, input, weight, bias, stride, padding):
+#         input, weight = input.data, weight.data
+#         batchsize, input_channel, height, width = input.shape
+#         output_channel, input_channel, kernel_height, kernel_width = weight.shape
+#         col_weight = weight.reshape([output_channel, -1])
+#         input = np.pad(input, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
+#         conv_out = np.zeros(
+#             (batchsize, 
+#             output_channel, 
+#             (height - kernel_height + 2 * padding[0]) // stride[0] + 1,
+#             (width - kernel_width + 2 * padding[1]) // stride[1] + 1
+#             ))
+#         col_image = []
+#         for i in range(batchsize):
+#             img_i = input[i][np.newaxis, :] # make it a 4D array
+#             col_image_i = im2col(img_i, kernel_height, kernel_width, stride)
+#             col_image.append(col_image_i)
+#             if bias is not None:
+#                 conv_out[i] = np.reshape(np.dot(col_weight, np.transpose(col_image_i)) + bias.data.reshape((-1,1)), conv_out[0].shape)
+#             else:
+#                 conv_out[i] = np.reshape(np.dot(col_weight, np.transpose(col_image_i)), conv_out[0].shape)
+#         col_image = np.array(col_image)
+#         ctx.save_for_backward(col_image, col_weight, bias,
+#             input.shape,
+#             weight.shape,
+#             stride,
+#             padding
+#             )
+#         return Tensor(conv_out)
+    
+#     @staticmethod
+#     def backward(ctx, grad_output):
+#         col_image, col_weight, bias, input_shape, weight_shape, stride, padding = ctx.saved_tensors
+#         batchsize, output_channel, output_height, output_width = grad_output.shape
+#         batchsize, input_channel, height, width = input_shape
+#         output_channel, input_channel, kernel_height, kernel_width = weight_shape
+        
+#         # init gradient for img2col
+#         col_weight_gradient = zeros(col_weight.shape)
+#         conv_out_gradient = grad_output.reshape(batchsize, output_channel, -1)
+        
+#         # init gradient for input tensor
+#         if bias is not None:
+#             bias_gradient = ones(output_channel) 
+#         else:
+#             bias_gradient = None
+        
+#         input_gradient = zeros(input_shape)
+    
+#         for i in range(batchsize):
+#             col_image_gradient = mm(transpose(conv_out_gradient[i]), col_weight, None)
+#             col_weight_gradient += mm(conv_out_gradient[i], col_image[i], None)
+            
+#             j = 0
+#             for h in range(0, height - kernel_height + 1, stride[0]):
+#                 for w in range(0, width - kernel_width + 1, stride[1]):
+#                     input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient[j].reshape((input_channel, kernel_height, kernel_width))
+#                     j += 1
+        
+#         weight_gradient = col_weight_gradient.reshape(output_channel, input_channel, kernel_height, kernel_width)
+#         # remove padding
+#         input_gradient = input_gradient[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]]
+#         return input_gradient, weight_gradient, bias_gradient, None, None
+
 
 class View(autograd.Function):
     @staticmethod
     def forward(ctx, tensor, shape):
         ctx.save_for_backward(tensor.shape)
-        new_tensor = tensor.copy().reshape(shape)
+        new_tensor = tensor.reshape(shape)
         return new_tensor
     
     @staticmethod
     def backward(ctx, grad_output):
         original_shape, = ctx.saved_tensors
-        grad = grad_output.copy().reshape(original_shape)
+        grad = grad_output.reshape(original_shape)
         return grad
 
 
@@ -376,17 +450,16 @@ class Dropout(autograd.Function):
         if training:
             mask = np.random.binomial(1, p, size=input.shape)
             output[mask == 1] = 0
-            output[mask == 0] /= (1 - p)
+            output /= (1 - p)
         ctx.save_for_backward(mask, training, p)
-        return Tensor(output)
+        return output
     
     @staticmethod
     def backward(ctx, grad_output):
-        # grad_output is size (N, 1), output is size (N, C) 
         mask, training, p = ctx.saved_tensors
         if training:
             grad_output[mask == 1] = 0
-            grad_output[mask == 1] /= (1 - p) 
+            grad_output /= (1 - p) 
         return grad_output, None, None
     
     

@@ -136,8 +136,8 @@ class Tensor:
         return "tensor(%s)" % self.data
     
     def reshape(self, *new_shape):
-        self.data = self.data.reshape(*new_shape)
-        return self
+        new_data = self.data.reshape(*new_shape)
+        return Tensor(new_data)
 
     def argmax(self, *args, **kwargs):
         return Tensor(self.data.argmax(*args, **kwargs))
@@ -215,10 +215,33 @@ class Tensor:
         else:
             self.data[key] = value
 
+    def view(self, shape):
+        from . import function as F
+        return F.view(self, shape)
+
+
+def flatten(tensor, start_dim=0, end_dim=-1):
+    from . import function as F
+    new_shape = []
+    shape = tensor.shape
+    if end_dim == -1:
+        end_dim = tensor.dim() - 1
+    
+    compressed = 1
+    for i in range(0, tensor.dim()):
+        if i < start_dim or i > end_dim:
+            new_shape.append(shape[i])
+        else:
+            compressed *= shape[i]
+            if i == end_dim:
+                new_shape.append(compressed)
+    return F.view(tensor, tuple(new_shape))
+
 def transpose(tensor):
-    # TODO: fix shape here
-    tensor.data = np.transpose(tensor.data)
-    return tensor
+    from . import function as F
+    shape = tensor.shape
+    new_shape = (shape[1], shape[0])
+    return F.view(tensor, new_shape)
 
 def empty(shape, require_grad=False):
     return Tensor(np.empty(shape), require_grad)

@@ -117,13 +117,7 @@ class Conv2d(Module):
         self.stride = _make_pair(stride)
         self.padding = _make_pair(padding)
 
-        # weight_scale = math.sqrt(self.kernel_size[0] * self.kernel_size[1] * self.input_channel / 2)
-        # if bias:
-        #     self.bias = Tensor(np.random.standard_normal(self.output_channel) / weight_scale, require_grad=True)
-        # else:
-        #     self.bias = None
-        # self.weight = Tensor(np.random.standard_normal(
-        #     (self.output_channel, self.input_channel, self.kernel_size[0], self.kernel_size[1])) / weight_scale, require_grad=True)
+    
         if bias:
             self.bias = Tensor(kaiming_uniform((output_channel,)), require_grad=True)
         else:

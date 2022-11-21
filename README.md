@@ -26,7 +26,8 @@ PS: `pytorch` is required to check the correctness of implementation.
 * mm [done]
 * relu [done]
 * max_pool2d [done]
-* conv2d [done]
+* conv2d []
+    * efficient im2col
 * log_softmax [done]
 * view [done]
 * nll_loss [done]
@@ -58,3 +59,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 * dataloader [done]
 * hide numpy from user []
 * dot graph []
+
+
+### Bug
+* Conv grad with padding
