@@ -67,13 +67,13 @@ class TestGradientPytorch(unittest.TestCase):
         assert np.allclose(convert_to_numpy(torch_input.grad), flow_input.grad.data, atol=1e-6)
 
     def test_conv2d(self):
-        torch_conv2d = torch.nn.Conv2d(3, 2, 2, padding=0, bias=False)
+        torch_conv2d = torch.nn.Conv2d(3, 2, 2, padding=1, bias=False)
         torch_input = torch.rand((1, 3, 3, 3), requires_grad=True)
         torch_output = torch_conv2d(torch_input)
         torch_gradient, flow_gradient = generate_gradient((torch_output.shape))
         torch_output.backward(torch_gradient)
 
-        flow_conv2d = Conv2d(3, 2, 2, padding=0, bias=False)
+        flow_conv2d = Conv2d(3, 2, 2, padding=1, bias=False)
         flow_input = flow.Tensor(convert_to_numpy(torch_input), require_grad=True)
         flow_conv2d.weight = flow.Tensor(convert_to_numpy(torch_conv2d.weight), require_grad=True)
         flow_output = flow_conv2d(flow_input)
