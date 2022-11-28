@@ -8,7 +8,7 @@ import torch.optim as torch_optim
 import flow
 import flow.function as F
 from flow.utils import gradient_check
-from flow.module import Conv2d
+from flow.module import Conv2d, BatchNorm
 import flow.optim as flow_optim
 
 
@@ -47,12 +47,54 @@ class TestGradientAuto(unittest.TestCase):
 
     def test_mm_auto(self):
         gradient_check(F.mm, flow.randn((5,4), require_grad=True), flow.randn((4,5), require_grad=True), flow.randn((1,5), require_grad=True))
-    
-    # def test_view_auto(self):
-    #     gradient_check(F.view, flow.randn((4,5), require_grad=True), (20, 1))
 
+        
 class TestGradientPytorch(unittest.TestCase):
     # check using pytorch
+    def test_batchnorm(self):
+        # test 4D input
+        torch_input = torch.rand((5, 3, 3, 3), requires_grad=True)
+        torch_module = torch.nn.BatchNorm2d(3)
+        torch_output = torch_module(torch_input)
+        torch_gradient, flow_gradient = generate_gradient((torch_output.shape))
+        torch_output.backward(torch_gradient)
+
+        flow_input = flow.Tensor(convert_to_numpy(torch_input), require_grad=True)
+        flow_module = BatchNorm(3)
+        flow_output = flow_module(flow_input)
+        flow_output.backward(flow_gradient)
+        
+        assert np.allclose(convert_to_numpy(torch_output), flow_output.data, atol=1e-6)
+        assert np.allclose(convert_to_numpy(torch_input.grad), flow_input.grad.data, atol=1e-6)
+        
+        # test 3D input
+        torch_input = torch.rand((5, 3, 3), requires_grad=True)
+        torch_module = torch.nn.BatchNorm1d(3)
+        torch_output = torch_module(torch_input)
+        torch_gradient, flow_gradient = generate_gradient((torch_output.shape))
+        torch_output.backward(torch_gradient)
+
+        flow_input = flow.Tensor(convert_to_numpy(torch_input), require_grad=True)
+        flow_output = flow_module(flow_input)
+        flow_output.backward(flow_gradient)
+    
+        assert np.allclose(convert_to_numpy(torch_output), flow_output.data, atol=1e-6)
+        assert np.allclose(convert_to_numpy(torch_input.grad), flow_input.grad.data, atol=1e-6)
+        
+        # test 2D input
+        torch_input = torch.rand((5, 3), requires_grad=True)
+        torch_output = torch_module(torch_input)
+        torch_gradient, flow_gradient = generate_gradient((torch_output.shape))
+        torch_output.backward(torch_gradient)
+
+        flow_input = flow.Tensor(convert_to_numpy(torch_input), require_grad=True)
+        flow_output = flow_module(flow_input)
+        flow_output.backward(flow_gradient)
+    
+        assert np.allclose(convert_to_numpy(torch_output), flow_output.data, atol=1e-6)
+        assert np.allclose(convert_to_numpy(torch_input.grad), flow_input.grad.data, atol=1e-6)
+        
+        
     def test_logsoftmax(self):
         torch_input = torch.rand((3, 2), requires_grad=True)
         torch_output = torch_F.log_softmax(torch_input, dim=1)

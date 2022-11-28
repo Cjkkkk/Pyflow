@@ -238,8 +238,8 @@ def flatten(tensor, start_dim=0, end_dim=-1):
     return F.view(tensor, tuple(new_shape))
 
 def transpose(tensor):
-    new_tensor = Tensor(np.transpose(tensor.data))
-    return new_tensor
+    from . import function as F
+    return F.transpose(tensor)
 
 def empty(shape, require_grad=False):
     return Tensor(np.empty(shape), require_grad)

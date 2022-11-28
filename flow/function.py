@@ -320,7 +320,17 @@ class View(autograd.Function):
         grad = grad_output.reshape(original_shape)
         return grad
 
-
+class Transpose(autograd.Function):
+    @staticmethod
+    def forward(ctx, tensor):
+        new_tensor = Tensor(np.transpose(tensor.data))
+        return new_tensor
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        grad = Tensor(np.transpose(grad_output.data))
+        return grad
+    
 class LogSoftmax(autograd.Function):
     @staticmethod
     def forward(ctx, tensor, dim):
@@ -343,7 +353,7 @@ class LogSoftmax(autograd.Function):
         for i in range(N):
             jac = np.tile(e[i], (C, 1))
             jac[np.diag_indices_from(jac)] += 1
-            grad[i] = mm(Tensor(np.transpose(jac)), grad_output[i], None)
+            grad[i] = mm(transpose(jac), grad_output[i], None)
         return grad
 
 class NllLoss(autograd.Function):
@@ -401,7 +411,84 @@ class Dropout(autograd.Function):
             grad_output[mask == 1] = 0
             grad_output /= (1 - p) 
         return grad_output, None, None
+
+
+class BatchNorm(autograd.Function):
+    @staticmethod
+    def forward(ctx, input, weight, bias, running_mean, running_var, eps, momentum, is_training):
+        # input is (N, C, H, W) or (N, C)
+        running_mean_ = running_mean
+        running_var_ = running_var
+        
+        input = input.data
+        weight = weight.data
+        bias = bias.data
+        running_mean = running_mean.data
+        running_var = running_var.data
+        
+        num_features = weight.shape[0]
+        dim = len(input.shape)
+        
+        if dim == 2:
+            shape_descriptor = (1, num_features)
+            axis = 0
+        elif dim == 3:
+            shape_descriptor = (1, num_features, 1)
+            axis = (0, 2)
+        else:
+            shape_descriptor = (1, num_features, 1, 1)
+            axis = (0, 2, 3)
+
+        weight = weight.reshape(shape_descriptor)
+        bias = bias.reshape(shape_descriptor)
+        running_mean = running_mean.reshape(shape_descriptor)
+        running_var = running_var.reshape(shape_descriptor)
+        
+        if is_training:
+            mean = np.mean(input, axis=axis, keepdims=True)
+            var = np.mean((input - mean) ** 2, axis=axis, keepdims=True) # biased
+            running_mean = (1 - momentum) * running_mean + momentum * mean
+            running_var = (1 - momentum) * running_var + momentum * var
+            
+            input_hat = (input - mean) / np.sqrt(var + eps)
+            output = input_hat * weight + bias
+            ctx.save_for_backward(is_training, input, weight, input_hat, mean, var, eps)
+        else:
+            input_hat = (input - running_mean) / np.sqrt(running_var + eps)
+            output = input_hat * weight + bias
+            ctx.save_for_backward(is_training, None, None, None, None, None, None, None)
+        
+        running_mean_.data = running_mean.reshape(num_features)
+        running_var_.data = running_var.reshape(num_features)
+        
+        return Tensor(output)
     
+    @staticmethod
+    def backward(ctx, grad_output):
+        is_training, input, weight, input_hat, mean, var, eps = ctx.saved_tensors
+        grad_output = grad_output.data
+        
+        dim = len(input.shape)
+        if dim == 2:
+            axis = 0
+            N = input.shape[0]
+        elif dim == 3:
+            axis = (0, 2)
+            N = input.shape[0] * input.shape[2]
+        else:
+            axis = (0, 2, 3)
+            N = input.shape[0] * input.shape[2] * input.shape[3]
+        
+        if is_training:
+            weight_grad = np.sum(input_hat * grad_output, axis=axis)
+            bias_grad = np.sum(grad_output, axis=axis)
+            input_hat_grad = grad_output * weight
+            var_grad = -0.5 * np.sum(input_hat_grad * (input - mean), axis=axis, keepdims=True) * np.power(var + eps, -1.5)
+            mean_grad = -np.sum(input_hat_grad / np.sqrt(var + eps), axis=axis, keepdims=True) - 2 * var_grad * np.sum(input - mean, axis=axis, keepdims=True) / N
+            input_grad = input_hat_grad / np.sqrt(var + eps) + 2.0 * var_grad * (input - mean) / N + mean_grad / N
+            return Tensor(input_grad), Tensor(weight_grad), Tensor(bias_grad), None, None, None, None, None
+        else:
+            return Tensor(grad_output), None, None, None, None, None, None, None
     
 add = Add.apply
 mul = Mul.apply
@@ -418,5 +505,7 @@ conv2d = Conv2d.apply
 max_pool2d = MaxPool2d.apply
 log_softmax = LogSoftmax.apply
 view = View.apply
+transpose = Transpose.apply
 nll_loss = NllLoss.apply
 dropout = Dropout.apply
+batchnorm = BatchNorm.apply

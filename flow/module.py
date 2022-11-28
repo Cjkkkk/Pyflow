@@ -135,5 +135,22 @@ class Dropout(Module):
         self.inplace = inplace
             
     def forward(self, x):
-        y = F.dropout(x, self._training, self.p, self.inplace)
-        return y
+        return F.dropout(x, self._training, self.p, self.inplace)
+    
+    
+class BatchNorm(Module):
+    def __init__(self, num_features, eps=1e-05, momentum=0.1):
+        super().__init__()
+        self.num_features = num_features
+        self.eps = eps
+        self.momentum = momentum
+        self.weight = Tensor(np.ones(num_features), require_grad=True)
+        self.bias = Tensor(np.zeros(num_features), require_grad=True)
+        self.running_mean = Tensor(np.zeros(num_features))
+        self.running_var = Tensor(np.ones(num_features))
+        
+    def forward(self, input):
+        if input.dim() not in (2, 3, 4):
+            raise RuntimeError("Input dim should be 2, 3 or 4.")
+        output = F.batchnorm(input, self.weight, self.bias, self.running_mean, self.running_var, self.eps, self.momentum, self._training)
+        return output
