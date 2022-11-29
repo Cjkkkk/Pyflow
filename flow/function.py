@@ -183,25 +183,30 @@ class MaxPool2d(autograd.Function):
         stride = _make_pair(stride)
         padding = _make_pair(padding)
 
+        KH, KW = kernel_size
+        SH, SW = stride
+        PH, PW = padding
+        
         data = tensor.data
-        data = np.pad(data, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
-        N, channel, H, W = data.shape
+        data = np.pad(data, ((0, 0), (0, 0), (PH, PH), (PW, PW)), 'constant', constant_values=0)
+        N, C, H, W = data.shape
+        
         output = np.zeros(
             (N, 
-            channel, 
-            (H - kernel_size[0] + 2 * padding[0]) // stride[0] + 1,
-            (W - kernel_size[1] + 2 * padding[1]) // stride[1] + 1
+            C, 
+            (H - KH + 2 * PH) // SH + 1,
+            (W - KW + 2 * PW) // SW + 1
             ))
-        N, channel, H_O, W_O = output.shape
+        N, C, H_O, W_O = output.shape
         for i in range(N):
-            for j in range(channel):
-                for h in range(0, H - kernel_size[0] + 1, stride[0]):
-                    for w in range(0, W - kernel_size[1] + 1, stride[1]):
-                        output[i, j, h // stride[0], w // stride[1]] = np.max(data[
+            for j in range(C):
+                for h in range(0, H - KH + 1, SH):
+                    for w in range(0, W - KW + 1, SW):
+                        output[i, j, h // SH, w // SW] = np.max(data[
                             i, 
                             j, 
-                            h : h + kernel_size[0], 
-                            w : w + kernel_size[1]
+                            h : h + KH, 
+                            w : w + KW
                             ])
         ctx.save_for_backward(tensor, kernel_size, stride, padding)
         return Tensor(output)
@@ -209,36 +214,31 @@ class MaxPool2d(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         tensor, kernel_size, stride, padding = ctx.saved_tensors
-        N, channel, H, W = tensor.shape
-        N, channel, H_O, W_O = grad_output.shape
+        N, C, H, W = tensor.shape
+        N, C, H_O, W_O = grad_output.shape
+        
+        KH, KW = kernel_size
+        SH, SW = stride
+        PH, PW = padding
         
         grad = zeros(tensor.shape)
         for i in range(N):
-            for j in range(channel):
-                for h in range(0, H - kernel_size[0] + 1, stride[0]):
-                    for w in range(0, W - kernel_size[1] + 1, stride[1]):
-                        mask = tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] == max(tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]])
-                        grad[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] += mask * grad_output[i, j, h // stride[0], w // stride[1]]
+            for j in range(C):
+                for h in range(0, H - KH + 1, SH):
+                    for w in range(0, W - KW + 1, SW):
+                        mask = tensor[i, j, h : h + KH, w : w + KW] == max(tensor[i, j, h : h + KH, w : w + KW])
+                        grad[i, j, h : h + KH, w : w + KW] += mask * grad_output[i, j, h // SH, w // SW]
         
-        return grad[:, :, padding[0]: H-padding[0], padding[1]: W-padding[1]], None, None, None
+        return grad[:, :, PH: H-PH, PW: W-PW], None, None, None
 
 
 def im2col(image, KH, KW, stride):
     # image is a 4d tensor([N, channel, H, W])
     image_col = []
-    for i in range(0, image.shape[2] - KH + 1, stride[0]):
-        for j in range(0, image.shape[3] - KW + 1, stride[1]):
-            col = image[:, :, i:i + KH, j:j + KW].reshape([-1])
-            image_col.append(col)
-    image_col = np.array(image_col)
-    return image_col
-
-
-def im2col(image, KH, KW, stride):
-    # image is a 4d tensor([N, channel, H, W])
-    image_col = []
-    for i in range(0, image.shape[2] - KH + 1, stride[0]):
-        for j in range(0, image.shape[3] - KW + 1, stride[1]):
+    SH, SW = stride
+    
+    for i in range(0, image.shape[2] - KH + 1, SH):
+        for j in range(0, image.shape[3] - KW + 1, SW):
             col = image[:, :, i:i + KH, j:j + KW].reshape([-1])
             image_col.append(col)
     image_col = np.array(image_col)
@@ -251,13 +251,17 @@ class Conv2d(autograd.Function):
         input, weight = input.data, weight.data
         N, C_i, H, W = input.shape
         C_O, C_i, KH, KW = weight.shape
+        
+        SH, SW = stride
+        PH, PW = padding
+        
         col_weight = weight.reshape((C_O, -1))
-        input = np.pad(input, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
+        input = np.pad(input, ((0, 0), (0, 0), (PH, PH), (PW, PW)), 'constant', constant_values=0)
         conv_out = np.zeros(
             (N, 
             C_O, 
-            (H - KH + 2 * padding[0]) // stride[0] + 1,
-            (W - KW + 2 * padding[1]) // stride[1] + 1
+            (H - KH + 2 * PH) // SH + 1,
+            (W - KW + 2 * PW) // SW + 1
             ))
         col_image = []
         for i in range(N):
@@ -283,6 +287,8 @@ class Conv2d(autograd.Function):
         N, C_O, H_O, W_O = grad_output.shape
         N, C_i, H, W = input_shape
         C_O, C_i, KH, KW = weight_shape
+        SH, SW = stride
+        PH, PW = padding
         
         # init gradient for img2col
         col_weight_gradient = zeros(col_weight.shape)
@@ -297,14 +303,14 @@ class Conv2d(autograd.Function):
             col_weight_gradient += mm(conv_out_gradient[i], col_image[i], None)
             
             j = 0
-            for h in range(0, H - KH + 1, stride[0]):
-                for w in range(0, W - KW + 1, stride[1]):
+            for h in range(0, H - KH + 1, SH):
+                for w in range(0, W - KW + 1, SW):
                     input_gradient[i, :, h: h + KH, w: w + KW] += col_image_gradient[j].reshape((C_i, KH, KW))
                     j += 1
         
         weight_gradient = col_weight_gradient.reshape(C_O, C_i, KH, KW)
         # remove padding
-        input_gradient = input_gradient[:, :, padding[0]: H-padding[0], padding[1]: W-padding[1]]
+        input_gradient = input_gradient[:, :, PH: H-PH, PW: W-PW]
         return input_gradient, weight_gradient, bias_gradient, None, None
 
 
