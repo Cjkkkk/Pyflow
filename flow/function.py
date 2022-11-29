@@ -185,18 +185,18 @@ class MaxPool2d(autograd.Function):
 
         data = tensor.data
         data = np.pad(data, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
-        batchsize, channel, height, width = data.shape
+        N, channel, H, W = data.shape
         output = np.zeros(
-            (batchsize, 
+            (N, 
             channel, 
-            (height - kernel_size[0] + 2 * padding[0]) // stride[0] + 1,
-            (width - kernel_size[1] + 2 * padding[1]) // stride[1] + 1
+            (H - kernel_size[0] + 2 * padding[0]) // stride[0] + 1,
+            (W - kernel_size[1] + 2 * padding[1]) // stride[1] + 1
             ))
-        batchsize, channel, output_height, output_width = output.shape
-        for i in range(batchsize):
+        N, channel, H_O, W_O = output.shape
+        for i in range(N):
             for j in range(channel):
-                for h in range(0, height - kernel_size[0] + 1, stride[0]):
-                    for w in range(0, width - kernel_size[1] + 1, stride[1]):
+                for h in range(0, H - kernel_size[0] + 1, stride[0]):
+                    for w in range(0, W - kernel_size[1] + 1, stride[1]):
                         output[i, j, h // stride[0], w // stride[1]] = np.max(data[
                             i, 
                             j, 
@@ -209,59 +209,60 @@ class MaxPool2d(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         tensor, kernel_size, stride, padding = ctx.saved_tensors
-        batchsize, channel, height, width = tensor.shape
-        batchsize, channel, output_height, output_width = grad_output.shape
+        N, channel, H, W = tensor.shape
+        N, channel, H_O, W_O = grad_output.shape
         
         grad = zeros(tensor.shape)
-        for i in range(batchsize):
+        for i in range(N):
             for j in range(channel):
-                for h in range(0, height - kernel_size[0] + 1, stride[0]):
-                    for w in range(0, width - kernel_size[1] + 1, stride[1]):
+                for h in range(0, H - kernel_size[0] + 1, stride[0]):
+                    for w in range(0, W - kernel_size[1] + 1, stride[1]):
                         mask = tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] == max(tensor[i, j, h : h + kernel_size[0], w : w + kernel_size[1]])
                         grad[i, j, h : h + kernel_size[0], w : w + kernel_size[1]] += mask * grad_output[i, j, h // stride[0], w // stride[1]]
         
-        return grad[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]], None, None, None
+        return grad[:, :, padding[0]: H-padding[0], padding[1]: W-padding[1]], None, None, None
 
 
-def im2col(image, kernel_height, kernel_width, stride):
-    # image is a 4d tensor([batchsize, channel, height, width])
+def im2col(image, KH, KW, stride):
+    # image is a 4d tensor([N, channel, H, W])
     image_col = []
-    for i in range(0, image.shape[2] - kernel_height + 1, stride[0]):
-        for j in range(0, image.shape[3] - kernel_width + 1, stride[1]):
-            col = image[:, :, i:i + kernel_height, j:j + kernel_width].reshape([-1])
+    for i in range(0, image.shape[2] - KH + 1, stride[0]):
+        for j in range(0, image.shape[3] - KW + 1, stride[1]):
+            col = image[:, :, i:i + KH, j:j + KW].reshape([-1])
             image_col.append(col)
     image_col = np.array(image_col)
     return image_col
 
 
-def im2col(image, kernel_height, kernel_width, stride):
-    # image is a 4d tensor([batchsize, channel, height, width])
+def im2col(image, KH, KW, stride):
+    # image is a 4d tensor([N, channel, H, W])
     image_col = []
-    for i in range(0, image.shape[2] - kernel_height + 1, stride[0]):
-        for j in range(0, image.shape[3] - kernel_width + 1, stride[1]):
-            col = image[:, :, i:i + kernel_height, j:j + kernel_width].reshape([-1])
+    for i in range(0, image.shape[2] - KH + 1, stride[0]):
+        for j in range(0, image.shape[3] - KW + 1, stride[1]):
+            col = image[:, :, i:i + KH, j:j + KW].reshape([-1])
             image_col.append(col)
     image_col = np.array(image_col)
     return image_col
+    
 
 class Conv2d(autograd.Function):
     @staticmethod
     def forward(ctx, input, weight, bias, stride, padding):
         input, weight = input.data, weight.data
-        batchsize, input_channel, height, width = input.shape
-        output_channel, input_channel, kernel_height, kernel_width = weight.shape
-        col_weight = weight.reshape([output_channel, -1])
+        N, C_i, H, W = input.shape
+        C_O, C_i, KH, KW = weight.shape
+        col_weight = weight.reshape((C_O, -1))
         input = np.pad(input, ((0, 0), (0, 0), (padding[0], padding[0]), (padding[1], padding[1])), 'constant', constant_values=0)
         conv_out = np.zeros(
-            (batchsize, 
-            output_channel, 
-            (height - kernel_height + 2 * padding[0]) // stride[0] + 1,
-            (width - kernel_width + 2 * padding[1]) // stride[1] + 1
+            (N, 
+            C_O, 
+            (H - KH + 2 * padding[0]) // stride[0] + 1,
+            (W - KW + 2 * padding[1]) // stride[1] + 1
             ))
         col_image = []
-        for i in range(batchsize):
+        for i in range(N):
             img_i = input[i][np.newaxis, :]
-            col_image_i = im2col(img_i, kernel_height, kernel_width, stride)
+            col_image_i = im2col(img_i, KH, KW, stride)
             col_image.append(col_image_i)
             if bias is not None:
                 conv_out[i] = np.reshape(np.dot(col_weight, np.transpose(col_image_i)) + bias.data, conv_out[0].shape)
@@ -279,31 +280,31 @@ class Conv2d(autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         col_image, col_weight, bias, input_shape, weight_shape, stride, padding = ctx.saved_tensors
-        batchsize, output_channel, output_height, output_width = grad_output.shape
-        batchsize, input_channel, height, width = input_shape
-        output_channel, input_channel, kernel_height, kernel_width = weight_shape
+        N, C_O, H_O, W_O = grad_output.shape
+        N, C_i, H, W = input_shape
+        C_O, C_i, KH, KW = weight_shape
         
         # init gradient for img2col
         col_weight_gradient = zeros(col_weight.shape)
-        conv_out_gradient = grad_output.reshape(batchsize, output_channel, -1)
+        conv_out_gradient = grad_output.reshape(N, C_O, -1)
         
         # init gradient for input tensor
-        bias_gradient = ones(output_channel) if bias is None else None
+        bias_gradient = ones(C_O) if bias is None else None
         input_gradient = zeros(input_shape)
     
-        for i in range(batchsize):
+        for i in range(N):
             col_image_gradient = mm(transpose(conv_out_gradient[i]), col_weight, None)
             col_weight_gradient += mm(conv_out_gradient[i], col_image[i], None)
             
             j = 0
-            for h in range(0, height - kernel_height + 1, stride[0]):
-                for w in range(0, width - kernel_width + 1, stride[1]):
-                    input_gradient[i, :, h: h + kernel_height, w: w + kernel_width] += col_image_gradient[j].reshape((input_channel, kernel_height, kernel_width))
+            for h in range(0, H - KH + 1, stride[0]):
+                for w in range(0, W - KW + 1, stride[1]):
+                    input_gradient[i, :, h: h + KH, w: w + KW] += col_image_gradient[j].reshape((C_i, KH, KW))
                     j += 1
         
-        weight_gradient = col_weight_gradient.reshape(output_channel, input_channel, kernel_height, kernel_width)
+        weight_gradient = col_weight_gradient.reshape(C_O, C_i, KH, KW)
         # remove padding
-        input_gradient = input_gradient[:, :, padding[0]: height-padding[0], padding[1]: width-padding[1]]
+        input_gradient = input_gradient[:, :, padding[0]: H-padding[0], padding[1]: W-padding[1]]
         return input_gradient, weight_gradient, bias_gradient, None, None
 
 

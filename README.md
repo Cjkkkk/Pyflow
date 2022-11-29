@@ -27,7 +27,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 * relu [done]
 * max_pool2d [done]
 * conv2d []
-    * efficient im2col
+    * efficient im2col with stride
 * log_softmax [done]
 * view [done]
 * nll_loss [done]
@@ -52,6 +52,7 @@ PS: `pytorch` is required to check the correctness of implementation.
 
 ### Memory Optimization
 * ref count []
+    * use topological sort and fix inplace operation
 * in-place[]
 * normal sharing []
 
